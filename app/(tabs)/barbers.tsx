@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { SafeAreaView } from "react-native-safe-area-context";
 import {
-  SafeAreaView,
   View,
   Text,
   StyleSheet,
@@ -18,7 +18,6 @@ import {
 } from "../../lib/barbers-store";
 
 type Region = "All Regions" | City;
-
 
 export default function BarbersScreen() {
   const router = useRouter();
@@ -198,7 +197,7 @@ function ProfileCard({ p }: { p: BarberProfile }) {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: "#FFFFFF" },
-  scroll: { padding: 16, marginTop: 24},
+  scroll: { padding: 16, marginTop: 24 },
 
   headerTitle: {
     fontSize: 20,

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
+import { SafeAreaView } from "react-native-safe-area-context";
 import {
-  SafeAreaView,
   View,
   Text,
   StyleSheet,
@@ -45,7 +45,7 @@ export default function HomeScreen() {
           shopsStore.fetchAll(),
         ]);
       } catch (error) {
-        console.error('Error loading home data:', error);
+        console.error("Error loading home data:", error);
       } finally {
         setLoading(false);
       }
@@ -55,7 +55,9 @@ export default function HomeScreen() {
 
     // Subscribe to store changes
     const unsubJobs = jobsStore.subscribe(() => setJobs(jobsStore.get()));
-    const unsubBarbers = barbersStore.subscribe(() => setBarbers(barbersStore.get()));
+    const unsubBarbers = barbersStore.subscribe(() =>
+      setBarbers(barbersStore.get())
+    );
     const unsubShops = shopsStore.subscribe(() => setShops(shopsStore.get()));
 
     return () => {
@@ -122,15 +124,18 @@ export default function HomeScreen() {
         {/* Featured Listings */}
         <Text style={styles.sectionTitle}>Featured Listings</Text>
 
-
-       {loading ? (
-          <ActivityIndicator size="large" color="#10B981" style={{ marginVertical: 20 }} />
+        {loading ? (
+          <ActivityIndicator
+            size="large"
+            color="#10B981"
+            style={{ marginVertical: 20 }}
+          />
         ) : (
           <View style={styles.listCol}>
             {/* Job Listing */}
             {jobs.length > 0 && (
               <ListingCard
-                imageUri={jobs[0].images?.[0]} 
+                imageUri={jobs[0].images?.[0]}
                 title={jobs[0].shop_name || "Job Listing"}
                 subtitle={jobs[0].location || "Location"}
                 badgeText={jobs[0].job_type || "Job"}
@@ -149,7 +154,7 @@ export default function HomeScreen() {
               <ListingCard
                 title={barbers[0].full_name}
                 subtitle={barbers[0].experience || "Experience"}
-                imageUri={barbers[0].images?.[0]} 
+                imageUri={barbers[0].images?.[0]}
                 badgeText="Available"
                 badgeColor="#10B981"
                 onPress={() =>
@@ -165,7 +170,7 @@ export default function HomeScreen() {
                 subtitle={`${shops[0].location || "Location"} • ${
                   shops[0].sale_price || "Price"
                 }`}
-                imageUri={shops[0].images?.[0]} 
+                imageUri={shops[0].images?.[0]}
                 badgeText="For Sale"
                 badgeColor="#8B5CF6"
                 onPress={() =>
@@ -175,11 +180,13 @@ export default function HomeScreen() {
             )}
 
             {/* Empty state */}
-            {jobs.length === 0 && barbers.length === 0 && shops.length === 0 && (
-              <Text style={styles.emptyText}>
-                No featured listings available yet.
-              </Text>
-            )}
+            {jobs.length === 0 &&
+              barbers.length === 0 &&
+              shops.length === 0 && (
+                <Text style={styles.emptyText}>
+                  No featured listings available yet.
+                </Text>
+              )}
           </View>
         )}
 

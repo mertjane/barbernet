@@ -1,7 +1,7 @@
 import React, { useState } from "react";
+import { SafeAreaView } from "react-native-safe-area-context";
 import {
   Image,
-  SafeAreaView,
   View,
   Text,
   Pressable,
@@ -28,7 +28,7 @@ import { userStore } from "@/lib/user-store";
 
 export default function RegisterScreen() {
   const router = useRouter();
-  const { response, promptAsync } = useGoogleRequest();
+  const { request, response, promptAsync } = useGoogleRequest();
   const [loading, setLoading] = useState(false);
 
   // ============================================
@@ -78,7 +78,7 @@ export default function RegisterScreen() {
         photo: require("../assets/images/brandlogo.png"),
       });
 
-      // ✅ Send Firebase user info to backend (Neon DB) 
+      // ✅ Send Firebase user info to backend (Neon DB)
       await registerUserInDB({
         id: user.uid, // Firebase UUID as primary ID
         name: user.displayName || email.split("@")[0],

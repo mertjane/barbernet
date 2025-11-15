@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { styles } from "@/styles/_login.styles";
+import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   Image,
-  SafeAreaView,
   View,
   Text,
   Pressable,
