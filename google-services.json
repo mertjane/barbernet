@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "475618421121",
+    "project_id": "barbernet-861bc",
+    "storage_bucket": "barbernet-861bc.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:475618421121:android:d1fec254706f72dee1e080",
+        "android_client_info": {
+          "package_name": "com.dev.barberNet"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "475618421121-38sl05cnin3egftbni7ddfja7klc2spk.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCNLSoHCFNE_tmfcDnqV7LTPUMST065Ofo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "475618421121-38sl05cnin3egftbni7ddfja7klc2spk.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
