@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "475618421121-otf852rgdof4u3oim76ck3ciam1n7cbq.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.dev.barberNet",
+            "certificate_hash": "98520402c2fb08e922610c11b617192698342008"
+          }
+        },
+        {
           "client_id": "475618421121-38sl05cnin3egftbni7ddfja7klc2spk.apps.googleusercontent.com",
           "client_type": 3
         }
@@ -29,6 +37,13 @@
             {
               "client_id": "475618421121-38sl05cnin3egftbni7ddfja7klc2spk.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "475618421121-9k30f8u1sdserrgkqh97m9a5dd5d8o0m.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "475618421121-qjh88jphig737glm6t4f955qfdrs00hm.apps.googleusercontent.com"
+              }
             }
           ]
         }

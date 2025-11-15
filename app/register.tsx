@@ -25,6 +25,8 @@ import { markEntered } from "../lib/session";
 import { styles } from "@/styles/_register.styles";
 import { registerUserInDB } from "../services/auth.api";
 import { userStore } from "@/lib/user-store";
+import { getUserById } from "@/services/user.api";
+import { signInWithGoogle } from "@/services/auth-native.service";
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -165,10 +167,43 @@ export default function RegisterScreen() {
   const onGoogle = async () => {
     try {
       setLoading(true);
-      await promptAsync();
+      const userCredential = await signInWithGoogle();
+      const user = userCredential.user;
+
+      // Try to fetch user from DB first
+      let userData;
+      try {
+        userData = await getUserById(user.uid);
+      } catch (error) {
+        // User doesn't exist in DB, create them
+        await registerUserInDB({
+          id: user.uid,
+          name: user.displayName || "User",
+          email: user.email || "",
+          phone: user.phoneNumber || "",
+          photo: user.photoURL || undefined,
+        });
+        userData = await getUserById(user.uid);
+      }
+
+      // Update user store
+      userStore.update({
+        id: user.uid,
+        name: userData.name || "User",
+        email: userData.email || "",
+        phone: userData.phone || "",
+        photo: userData.photo ? { uri: userData.photo } : null,
+      });
+
+      await markEntered();
+      router.replace("/(tabs)/home");
     } catch (error: any) {
-      console.error("Error prompting Google sign-in:", error);
-      Alert.alert("Error", "Failed to start Google sign-in");
+      console.error("Google sign-in error:", error);
+      Alert.alert(
+        "Sign In Error",
+        error.message || "Failed to sign in with Google"
+      );
+    } finally {
       setLoading(false);
     }
   };

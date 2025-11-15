@@ -1,28 +1,10 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { Tabs } from "expo-router";
 import { Platform } from "react-native";
-import { useFonts } from 'expo-font';
-import * as SplashScreen from "expo-splash-screen";
 import { Feather, Ionicons } from "@expo/vector-icons";
 
-// Prevent splash screen from auto-hiding
-SplashScreen.preventAutoHideAsync();
-
 export default function TabsLayout() {
-  const [fontsLoaded] = useFonts({
-    ...Ionicons.font,
-    ...Feather.font,
-  });
-
-  useEffect(() => {
-    if (fontsLoaded) {
-      SplashScreen.hideAsync();
-    }
-  }, [fontsLoaded]);
-
-  if (!fontsLoaded) {
-    return null;
-  }
+ 
   return (
     <Tabs
       screenOptions={{

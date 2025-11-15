@@ -11,11 +11,34 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.dev.barberNet"
+      "bundleIdentifier": "com.dev.barberNet",
+      "googleServicesFile": "./GoogleService-Info.plist",
+      "infoPlist": {
+        "CFBundleURLTypes": [
+          {
+            "CFBundleURLSchemes": [
+              "com.googleusercontent.apps.475618421121-qjh88jphig737glm6t4f955qfdrs00hm"
+            ]
+          }
+        ]
+      }
     },
     "android": {
       "package": "com.dev.barberNet",
       "googleServicesFile": "./google-services.json",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "com.dev.barberNet",
+              "host": "oauth2redirect"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ],
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -58,12 +81,6 @@
         "storageBucket": "barbernet-861bc.firebasestorage.app",
         "messagingSenderId": "475618421121",
         "appId": "1:475618421121:web:9cc34f4f844ee87fe1e080"
-      },
-      "oauth": {
-        "google": {
-          "webClientId": "475618421121-38sl05cnin3egftbni7ddfja7klc2spk.apps.googleusercontent.com",
-          "androidClientId": "475618421121-otf852rgdof4u3oim76ck3ciam1n7cbq.apps.googleusercontent.com"
-        }
       },
       "router": {},
       "eas": {
