@@ -57,15 +57,13 @@ export default function Index() {
 
   useEffect(() => {
     (async () => {
-      // ✅ On web, handle launch screen timing
+      // ✅ On web, DON'T navigate here - let the timer handle it
       if (Platform.OS === "web") {
-        const timer = setTimeout(() => {
-          setShowLaunchScreen(false);
-        }, 2500);
-        return () => clearTimeout(timer);
+        // Just wait for launch screen to finish
+        return;
       }
 
-      // On mobile, check session
+      // ✅ On mobile, check session immediately
       const seen = await hasEntered();
       if (seen) router.replace("/(tabs)/home");
 
@@ -77,9 +75,16 @@ export default function Index() {
     })();
   }, [router]);
 
-  // Show launch screen on web
+  // ✅ Show launch screen on web with callback
   if (showLaunchScreen && Platform.OS === "web") {
-    return <LaunchScreen />;
+    return (
+      <LaunchScreen
+        onFinish={() => {
+          console.log("✅ Launch screen finished");
+          setShowLaunchScreen(false);
+        }}
+      />
+    );
   }
 
   // Handle Google Sign-In Response

@@ -3,7 +3,11 @@ import { View, Text, Image, StyleSheet, Animated, Platform } from "react-native"
 import { useRouter } from "expo-router";
 import { hasEntered } from "../lib/session";
 
-export default function LaunchScreen() {
+interface LaunchScreenProps {
+  onFinish?: () => void; // ✅ Add optional callback
+}
+
+export default function LaunchScreen({ onFinish }: LaunchScreenProps) {
   const router = useRouter();
   const fadeAnim = new Animated.Value(0);
   const scaleAnim = new Animated.Value(0.8);
@@ -26,6 +30,13 @@ export default function LaunchScreen() {
 
     // Navigate after 2.5 seconds
     const timer = setTimeout(async () => {
+      // ✅ If callback provided (embedded mode), use it
+      if (onFinish) {
+        onFinish();
+        return;
+      }
+
+      // ✅ Otherwise, use router (standalone mode)
       const seen = await hasEntered();
       if (seen) {
         router.replace("/(tabs)/home");
@@ -35,22 +46,13 @@ export default function LaunchScreen() {
     }, 2500);
 
     return () => clearTimeout(timer);
-  }, []);
-
-  const animatedStyle = Platform.OS === 'web' 
-    ? {} // Skip animations on web if causing issues
-    : {
-        opacity: fadeAnim,
-        transform: [{ scale: scaleAnim }]
-      };
-
+  }, [onFinish]);
 
   return (
     <View style={styles.container}>
       <Animated.View
         style={[
           styles.content,
-          animatedStyle,
           {
             opacity: fadeAnim,
             transform: [{ scale: scaleAnim }],
@@ -68,10 +70,10 @@ export default function LaunchScreen() {
 
         {/* App Name */}
         <Text style={styles.appName}>BarberNet</Text>
-
+        
         {/* Subtitle */}
         <Text style={styles.subtitle}>UK Barber Network</Text>
-
+        
         {/* Tagline */}
         <Text style={styles.tagline}>
           Connecting barbers, shops & suppliers
@@ -87,8 +89,6 @@ export default function LaunchScreen() {
     </View>
   );
 }
-
-
 
 const styles = StyleSheet.create({
   container: {
