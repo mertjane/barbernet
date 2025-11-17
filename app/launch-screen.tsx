@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { View, Text, Image, StyleSheet, Animated } from "react-native";
+import { View, Text, Image, StyleSheet, Animated, Platform } from "react-native";
 import { useRouter } from "expo-router";
 import { hasEntered } from "../lib/session";
 
@@ -37,11 +37,20 @@ export default function LaunchScreen() {
     return () => clearTimeout(timer);
   }, []);
 
+  const animatedStyle = Platform.OS === 'web' 
+    ? {} // Skip animations on web if causing issues
+    : {
+        opacity: fadeAnim,
+        transform: [{ scale: scaleAnim }]
+      };
+
+
   return (
     <View style={styles.container}>
       <Animated.View
         style={[
           styles.content,
+          animatedStyle,
           {
             opacity: fadeAnim,
             transform: [{ scale: scaleAnim }],
@@ -84,30 +93,34 @@ export default function LaunchScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0D9488", // Teal color from your design
-    justifyContent: "center",
-    alignItems: "center",
+    backgroundColor: '#0D9488',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   content: {
-    alignItems: "center",
+    alignItems: 'center',
     paddingHorizontal: 40,
   },
   logoCircle: {
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: "#FFFFFF",
-    justifyContent: "center",
-    alignItems: "center",
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 32,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 8,
+    ...Platform.select({
+      web: {
+        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.15)',
+      },
+      default: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 8,
+        elevation: 8,
+      },
+    }),
   },
   logo: {
     width: 60,
@@ -115,34 +128,34 @@ const styles = StyleSheet.create({
   },
   appName: {
     fontSize: 36,
-    fontWeight: "bold",
-    color: "#FFFFFF",
+    fontWeight: 'bold',
+    color: '#FFFFFF',
     marginBottom: 8,
     letterSpacing: 0.5,
   },
   subtitle: {
     fontSize: 16,
-    color: "#FFFFFF",
+    color: '#FFFFFF',
     opacity: 0.9,
     marginBottom: 4,
-    fontWeight: "500",
+    fontWeight: '500',
   },
   tagline: {
     fontSize: 14,
-    color: "#FFFFFF",
+    color: '#FFFFFF',
     opacity: 0.8,
-    textAlign: "center",
+    textAlign: 'center',
     marginBottom: 48,
   },
   dotsContainer: {
-    flexDirection: "row",
+    flexDirection: 'row',
     gap: 8,
   },
   dot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: '#FFFFFF',
     opacity: 0.4,
   },
   dotActive: {

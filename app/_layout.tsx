@@ -1,26 +1,31 @@
-import { Stack } from "expo-router";
+import { Stack, useRouter, useSegments } from "expo-router";
 import { Platform } from "react-native";
 import { useEffect, useState } from "react";
 
 export default function RootLayout() {
-  const [isWeb] = useState(Platform.OS === 'web');
-  const [showSplash, setShowSplash] = useState(true);
+  const router = useRouter();
+  const segments = useSegments();
+  const [hasNavigated, setHasNavigated] = useState(false);
 
   useEffect(() => {
-    if (isWeb) {
-      // Hide splash after 2 seconds on web
-      const timer = setTimeout(() => {
-        setShowSplash(false);
-      }, 2000);
-      return () => clearTimeout(timer);
+    // Only run on web and only once
+    if (Platform.OS === 'web' && !hasNavigated) {
+      // Check if we're on root or index
+      const isRoot = !segments[0] || segments[0] === 'index';
+      
+      if (isRoot) {
+        console.log('🌐 Web detected, navigating to launch screen');
+        router.replace('/launch-screen');
+        setHasNavigated(true);
+      }
     }
-  }, [isWeb]);
+  }, [segments, hasNavigated]);
 
 
   return (
-    <Stack 
+    <Stack
       screenOptions={{ headerShown: false }}
-      initialRouteName={showSplash && isWeb ? "launch-screen" : undefined}
+      initialRouteName="launch-screen"
     >
       <Stack.Screen name="launch-screen" />
       <Stack.Screen name="(tabs)" />
