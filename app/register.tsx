@@ -71,7 +71,7 @@ export default function RegisterScreen() {
         name: user.displayName || email.split("@")[0],
         email: user.email || "",
         phone: user.phoneNumber || "",
-        photo: require("../assets/images/brandlogo.png"),
+        photo: require("../assets/images/brand-logo.png"),
       });
 
       // Send Firebase user info to backend (Neon DB)
@@ -231,7 +231,7 @@ export default function RegisterScreen() {
           {/* ============================================ */}
           <View style={styles.header}>
             <Image
-              source={require("../assets/images/brandLogo.png")}
+              source={require("../assets/images/brand-logo.png")}
               style={styles.logo}
               resizeMode="contain"
             />

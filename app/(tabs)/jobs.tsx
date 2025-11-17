@@ -195,7 +195,7 @@ function JobCard({ job }: { job: StoreJob }) {
         source={ 
           job.images?.[0]
             ? { uri: job.images[0] }
-            : require("../../assets/images/brandLogo.png")
+            : require("../../assets/images/brand-logo.png")
         }
         style={styles.cardImage}
       />
