@@ -28,6 +28,7 @@ import { registerUserInDB } from "../services/auth.api";
 import { getUserById } from "@/services/user.api";
 import { handleGoogleSignIn } from "@/services/google-auth.service";
 import LaunchScreen from "./launch-screen";
+import { pingBackend } from "@/services/api-health";
 
 export default function Index() {
   const router = useRouter();
@@ -42,28 +43,19 @@ export default function Index() {
     Platform.OS === "web"
   );
 
-  /* useEffect(() => {
-    (async () => {
-      const seen = await hasEntered();
-      if (seen) router.replace("/(tabs)/home");
-
-      // Check if Apple Sign In is available
-      if (Platform.OS === "ios") {
-        const isAvailable = await AppleAuthentication.isAvailableAsync();
-        setAppleAvailable(isAvailable);
-      }
-    })();
-  }, [router]); */
-
   useEffect(() => {
     (async () => {
-      // ✅ On web, DON'T navigate here - let the timer handle it
+      // On web, DON'T navigate here - let the timer handle it
+      if (Platform.OS === "web" && process.env.NODE_ENV === "production") {
+        pingBackend(); // Fire and forget
+      }
+
       if (Platform.OS === "web") {
         // Just wait for launch screen to finish
         return;
       }
 
-      // ✅ On mobile, check session immediately
+      // On mobile, check session immediately
       const seen = await hasEntered();
       if (seen) router.replace("/(tabs)/home");
 
@@ -87,12 +79,7 @@ export default function Index() {
     );
   }
 
-  // Handle Google Sign-In Response
-  /* useEffect(() => {
-    if (response?.type === "success") {
-      handleGoogleSignIn();
-    }
-  }, [response]); */
+
 
   // ============================================
   // HANDLER: Email/Password Login
@@ -117,12 +104,12 @@ export default function Index() {
       );
       const user = userCredential.user;
 
-      // ✅ Firebase users have 'uid', not 'id'
+      // Firebase users have 'uid', not 'id'
       const userId = user.uid;
 
       console.log("Firebase User UID:", userId); // Debug log
 
-      // ✅ Try to fetch user from DB first
+      // Try to fetch user from DB first
       let userData;
       try {
         userData = await getUserById(userId);
@@ -131,7 +118,7 @@ export default function Index() {
         // User doesn't exist in DB, create them
         console.log("User not found in DB, creating...");
         await registerUserInDB({
-          id: userId, // ✅ Use Firebase UID
+          id: userId, // Use Firebase UID
           name: user.displayName || "User",
           email: user.email || "",
           phone: user.phoneNumber || "",
@@ -141,9 +128,9 @@ export default function Index() {
         userData = await getUserById(userId);
       }
 
-      // ✅ CRITICAL: Save Firebase UID to local store
+      // Firebase UID to local store
       const userForStore = {
-        id: userId, // ✅ Use Firebase UID, not email!
+        id: userId, // Use Firebase UID, not email!
         name: userData.name || "User",
         email: userData.email || "",
         phone: userData.phone || "",
@@ -191,61 +178,9 @@ export default function Index() {
     router.push("/register");
   };
 
-  /* useEffect(() => {
-    if (response?.type === "success") {
-      handleGoogleSignIn();
-    }
-  }, [response]); */
+ 
 
-  // ============================================
-  // HANDLER: Google Sign-In
-  // ============================================
-  /* const handleGoogleSignIn = async () => {
-    try {
-      setLoading(true);
-      const userCredential = await signInWithGoogleResponse(response);
-      const user = userCredential.user;
-      const userId = user.uid;
-
-      let userData;
-      try {
-        userData = await getUserById(userId);
-        console.log("Existing Google user found:", userData);
-      } catch (error) {
-        console.log("Google user not found in DB, creating...");
-        await registerUserInDB({
-          id: userId,
-          name: user.displayName || "User",
-          email: user.email || "",
-          phone: user.phoneNumber || "",
-          photo: user.photoURL || undefined,
-        });
-        userData = await getUserById(userId);
-      }
-
-      const userForStore = {
-        id: userId,
-        name: userData.name || "User",
-        email: userData.email || "",
-        phone: userData.phone || "",
-        photo: userData.photo ? { uri: userData.photo } : null,
-      };
-
-      userStore.update(userForStore);
-      await markEntered();
-      router.replace("/(tabs)/home");
-    } catch (error: any) {
-      console.error("Google sign-in error:", error);
-      Alert.alert(
-        "Sign In Error",
-        error.message || "Failed to sign in with Google"
-      );
-    } finally {
-      setLoading(false);
-    }
-  }; */
-
-  // ✅ Updated onGoogle function
+  // Updated onGoogle function
   const onGoogle = async () => {
     try {
       setLoading(true);
@@ -291,49 +226,7 @@ export default function Index() {
     }
   };
 
-  /* const onGoogle = async () => {
-    try {
-      setLoading(true);
 
-      const userCredential = await signInWithGoogleNative();
-      const user = userCredential.user;
-      const userId = user.uid;
-
-      let userData;
-      try {
-        userData = await getUserById(userId);
-      } catch (error) {
-        await registerUserInDB({
-          id: userId,
-          name: user.displayName || "User",
-          email: user.email || "",
-          phone: user.phoneNumber || "",
-          photo: user.photoURL || undefined,
-        });
-        userData = await getUserById(userId);
-      }
-
-      const userForStore = {
-        id: userId,
-        name: userData.name || "User",
-        email: userData.email || "",
-        phone: userData.phone || "",
-        photo: userData.photo ? { uri: userData.photo } : null,
-      };
-
-      userStore.update(userForStore);
-      await markEntered();
-      router.replace("/(tabs)/home");
-    } catch (error: any) {
-      console.error("Google sign-in error:", error);
-      Alert.alert(
-        "Sign In Error",
-        error.message || "Failed to sign in with Google"
-      );
-    } finally {
-      setLoading(false);
-    }
-  }; */
 
   // ============================================
   // HANDLER: Apple Sign-In
@@ -364,12 +257,12 @@ export default function Index() {
       const userCredential = await signInWithCredential(auth, authCredential);
       const user = userCredential.user;
 
-      // ✅ Firebase users have 'uid', not 'id'
+      // Firebase users have 'uid', not 'id'
       const userId = user.uid;
 
       console.log("Apple Firebase User UID:", userId); // Debug log
 
-      // ✅ Try to fetch user from DB first
+      // Try to fetch user from DB first
       let userData;
       try {
         userData = await getUserById(userId);
@@ -383,7 +276,7 @@ export default function Index() {
           : user.displayName || "User";
 
         await registerUserInDB({
-          id: userId, // ✅ Use Firebase UID
+          id: userId, // Use Firebase UID
           name: displayName,
           email: email || user.email || "",
           phone: user.phoneNumber || "",
@@ -396,7 +289,7 @@ export default function Index() {
 
       // ✅ Update user store with Firebase UID
       const userForStore = {
-        id: userId, // ✅ Use Firebase UID, not email!
+        id: userId, // Use Firebase UID, not email!
         name: userData.name || "User",
         email: userData.email || "",
         phone: userData.phone || "",
