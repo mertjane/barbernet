@@ -397,7 +397,7 @@ export default function Index() {
           {/* ============================================ */}
           <View style={styles.header}>
             <Image
-              source={require("../assets/images/brandLogo.png")}
+              source={require("../assets/images/brand-logo.png")}
               style={styles.logo}
               resizeMode="contain"
             />

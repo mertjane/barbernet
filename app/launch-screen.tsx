@@ -51,7 +51,7 @@ export default function LaunchScreen() {
         {/* Logo Circle */}
         <View style={styles.logoCircle}>
           <Image
-            source={require("../assets/images/brandLogo.png")}
+            source={require("../assets/images/brand-logo.png")}
             style={styles.logo}
             resizeMode="contain"
           />

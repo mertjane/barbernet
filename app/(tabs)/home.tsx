@@ -303,7 +303,7 @@ function ListingCard({
         source={
           imageUri
             ? { uri: imageUri }
-            : require("../../assets/images/brandLogo.png")
+            : require("../../assets/images/brand-logo.png")
         }
         style={styles.listImage}
       />

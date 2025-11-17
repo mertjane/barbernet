@@ -102,7 +102,7 @@ export default function ModalBarberDetail() {
   const avatar =
     barber.images && barber.images.length > 0
       ? { uri: barber.images[0] }
-      : require("../assets/images/brandLogo.png");
+      : require("../assets/images/brand-logo.png");
   const name = barber.full_name || "Barber Profile";
   const location = barber.city || "Location not specified";
   const experienceText = barber.experience || "Experience not specified";
