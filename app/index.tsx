@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { styles } from "@/styles/_login.styles";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { signInWithGoogleNative } from "@/services/auth-native.service";
 import {
   Image,
   View,
@@ -28,6 +27,7 @@ import {
 import { registerUserInDB } from "../services/auth.api";
 import { getUserById } from "@/services/user.api";
 import { handleGoogleSignIn } from "@/services/google-auth.service";
+import LaunchScreen from "./launch-screen";
 
 export default function Index() {
   const router = useRouter();
@@ -38,7 +38,11 @@ export default function Index() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  useEffect(() => {
+  const [showLaunchScreen, setShowLaunchScreen] = useState(
+    Platform.OS === "web"
+  );
+
+  /* useEffect(() => {
     (async () => {
       const seen = await hasEntered();
       if (seen) router.replace("/(tabs)/home");
@@ -49,7 +53,34 @@ export default function Index() {
         setAppleAvailable(isAvailable);
       }
     })();
+  }, [router]); */
+
+  useEffect(() => {
+    (async () => {
+      // ✅ On web, handle launch screen timing
+      if (Platform.OS === "web") {
+        const timer = setTimeout(() => {
+          setShowLaunchScreen(false);
+        }, 2500);
+        return () => clearTimeout(timer);
+      }
+
+      // On mobile, check session
+      const seen = await hasEntered();
+      if (seen) router.replace("/(tabs)/home");
+
+      // Check if Apple Sign In is available
+      if (Platform.OS === "ios") {
+        const isAvailable = await AppleAuthentication.isAvailableAsync();
+        setAppleAvailable(isAvailable);
+      }
+    })();
   }, [router]);
+
+  // Show launch screen on web
+  if (showLaunchScreen && Platform.OS === "web") {
+    return <LaunchScreen />;
+  }
 
   // Handle Google Sign-In Response
   /* useEffect(() => {
@@ -245,13 +276,15 @@ export default function Index() {
     } catch (error: any) {
       console.error("Google sign-in error:", error);
       if (error.message !== "Google Sign-In not available in Expo Go") {
-        Alert.alert("Sign In Error", error.message || "Failed to sign in with Google");
+        Alert.alert(
+          "Sign In Error",
+          error.message || "Failed to sign in with Google"
+        );
       }
     } finally {
       setLoading(false);
     }
   };
-
 
   /* const onGoogle = async () => {
     try {

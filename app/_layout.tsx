@@ -1,32 +1,8 @@
-import { Stack, useRouter, useSegments } from "expo-router";
-import { Platform } from "react-native";
-import { useEffect, useState } from "react";
+import { Stack } from "expo-router";
 
 export default function RootLayout() {
-  const router = useRouter();
-  const segments = useSegments();
-  const [hasNavigated, setHasNavigated] = useState(false);
-
-  useEffect(() => {
-    // Only run on web and only once
-    if (Platform.OS === 'web' && !hasNavigated) {
-      // Check if we're on root or index
-      const isRoot = !segments[0] || segments[0] === 'index';
-      
-      if (isRoot) {
-        console.log('🌐 Web detected, navigating to launch screen');
-        router.replace('/launch-screen');
-        setHasNavigated(true);
-      }
-    }
-  }, [segments, hasNavigated]);
-
-
   return (
-    <Stack
-      screenOptions={{ headerShown: false }}
-      initialRouteName="launch-screen"
-    >
+    <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="launch-screen" />
       <Stack.Screen name="(tabs)" />
       <Stack.Screen
