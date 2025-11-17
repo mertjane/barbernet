@@ -33,7 +33,7 @@ export default function ModalShopDetail() {
 
   const images = shop?.images && shop.images.length > 0 
     ? shop.images 
-    : [require("../assets/images/brandlogo.png")];
+    : [require("../assets/images/brandLogo.png")];
   const title = shop?.shop_name || "Shop Listing";
   const location = shop?.location;
   const price = shop?.sale_price ?? 0;

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   Image,
@@ -12,11 +12,7 @@ import {
 } from "react-native";
 import { AntDesign, FontAwesome } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import {
-  useGoogleRequest,
-  signInWithGoogleResponse,
-  isFirstSession,
-} from "../services/auth.service";
+
 import * as AppleAuthentication from "expo-apple-authentication";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { getFirebaseAuth } from "../config/firebase-config";
@@ -26,16 +22,14 @@ import { styles } from "@/styles/_register.styles";
 import { registerUserInDB } from "../services/auth.api";
 import { userStore } from "@/lib/user-store";
 import { getUserById } from "@/services/user.api";
-import { signInWithGoogle } from "@/services/auth-native.service";
+import { handleGoogleSignIn } from "@/services/google-auth.service";
+
 
 export default function RegisterScreen() {
   const router = useRouter();
-  const { request, response, promptAsync } = useGoogleRequest();
-  const [loading, setLoading] = useState(false);
 
-  // ============================================
-  // STATE: Email, Password & Confirm Password Input Fields
-  // ============================================
+
+  const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -80,7 +74,7 @@ export default function RegisterScreen() {
         photo: require("../assets/images/brandlogo.png"),
       });
 
-      // ✅ Send Firebase user info to backend (Neon DB)
+      // Send Firebase user info to backend (Neon DB)
       await registerUserInDB({
         id: user.uid, // Firebase UUID as primary ID
         name: user.displayName || email.split("@")[0],
@@ -118,95 +112,48 @@ export default function RegisterScreen() {
     router.back();
   };
 
-  // ============================================
-  // HANDLER: Google Sign-In
-  // ============================================
-  React.useEffect(() => {
-    if (response?.type === "success") {
-      handleGoogleSignIn();
-    }
-  }, [response]);
-
-  const handleGoogleSignIn = async () => {
-    try {
-      setLoading(true);
-      const userCredential = await signInWithGoogleResponse(response);
-      const user = userCredential.user;
-
-      // Update user store with Google data
-      userStore.update({
-        name: user.displayName || "User",
-        email: user.email || "",
-        phone: user.phoneNumber || "",
-        photo: user.photoURL
-          ? { uri: user.photoURL }
-          : require("../assets/images/brandlogo.png"),
-      });
-
-      await markEntered();
-
-      // Navigate based on first session
-      if (isFirstSession(user)) {
-        console.log("First time user!");
-        router.replace("/(tabs)/home");
-      } else {
-        console.log("Returning user!");
-        router.replace("/(tabs)/home");
-      }
-    } catch (error: any) {
-      console.error("Google sign-in error:", error);
-      Alert.alert(
-        "Sign In Error",
-        error.message || "Failed to sign in with Google"
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const onGoogle = async () => {
     try {
       setLoading(true);
-      const userCredential = await signInWithGoogle();
+      const userCredential = await handleGoogleSignIn(); // Uses smart detection
       const user = userCredential.user;
+      const userId = user.uid;
 
-      // Try to fetch user from DB first
       let userData;
       try {
-        userData = await getUserById(user.uid);
+        userData = await getUserById(userId);
       } catch (error) {
-        // User doesn't exist in DB, create them
         await registerUserInDB({
-          id: user.uid,
+          id: userId,
           name: user.displayName || "User",
           email: user.email || "",
           phone: user.phoneNumber || "",
           photo: user.photoURL || undefined,
         });
-        userData = await getUserById(user.uid);
+        userData = await getUserById(userId);
       }
 
-      // Update user store
-      userStore.update({
-        id: user.uid,
+      const userForStore = {
+        id: userId,
         name: userData.name || "User",
         email: userData.email || "",
         phone: userData.phone || "",
         photo: userData.photo ? { uri: userData.photo } : null,
-      });
+      };
 
+      userStore.update(userForStore);
       await markEntered();
       router.replace("/(tabs)/home");
     } catch (error: any) {
       console.error("Google sign-in error:", error);
-      Alert.alert(
-        "Sign In Error",
-        error.message || "Failed to sign in with Google"
-      );
+      if (error.message !== "Google Sign-In not available in Expo Go") {
+        Alert.alert("Sign In Error", error.message || "Failed to sign in with Google");
+      }
     } finally {
       setLoading(false);
     }
   };
+
 
   // ============================================
   // HANDLER: Apple Sign-In
@@ -222,54 +169,51 @@ export default function RegisterScreen() {
       });
 
       const { identityToken, fullName, email } = credential;
+      if (!identityToken) throw new Error("No identity token received");
 
-      if (!identityToken) {
-        throw new Error("No identity token received");
-      }
-
-      // Create Firebase credential
       const provider = new OAuthProvider("apple.com");
-      const authCredential = provider.credential({
-        idToken: identityToken,
-      });
-
+      const authCredential = provider.credential({ idToken: identityToken });
       const auth = getFirebaseAuth();
       const userCredential = await signInWithCredential(auth, authCredential);
       const user = userCredential.user;
+      const userId = user.uid;
 
-      // Update user store with Apple data
-      const displayName = fullName
-        ? `${fullName.givenName || ""} ${fullName.familyName || ""}`.trim()
-        : user.displayName || "User";
+      let userData;
+      try {
+        userData = await getUserById(userId);
+      } catch (error) {
+        const displayName = fullName
+          ? `${fullName.givenName || ""} ${fullName.familyName || ""}`.trim()
+          : user.displayName || "User";
 
-      userStore.update({
-        name: displayName,
-        email: email || user.email || "",
-        phone: user.phoneNumber || "",
-        photo: user.photoURL
-          ? { uri: user.photoURL }
-          : require("../assets/images/brandlogo.png"),
-      });
-
-      await markEntered();
-
-      if (isFirstSession(user)) {
-        console.log("First time Apple user!");
-        router.replace("/(tabs)/home");
-      } else {
-        console.log("Returning Apple user!");
-        router.replace("/(tabs)/home");
+        await registerUserInDB({
+          id: userId,
+          name: displayName,
+          email: email || user.email || "",
+          phone: user.phoneNumber || "",
+          photo: user.photoURL || undefined,
+        });
+        userData = await getUserById(userId);
       }
+
+      const userForStore = {
+        id: userId,
+        name: userData.name || "User",
+        email: userData.email || "",
+        phone: userData.phone || "",
+        photo: userData.photo ? { uri: userData.photo } : null,
+      };
+
+      userStore.update(userForStore);
+      await markEntered();
+      router.replace("/(tabs)/home");
     } catch (error: any) {
       if (error.code === "ERR_REQUEST_CANCELED") {
         setLoading(false);
         return;
       }
       console.error("Apple sign-in error:", error);
-      Alert.alert(
-        "Sign In Error",
-        error.message || "Failed to sign in with Apple"
-      );
+      Alert.alert("Sign In Error", error.message || "Failed to sign in with Apple");
     } finally {
       setLoading(false);
     }
@@ -287,7 +231,7 @@ export default function RegisterScreen() {
           {/* ============================================ */}
           <View style={styles.header}>
             <Image
-              source={require("../assets/images/brandlogo.png")}
+              source={require("../assets/images/brandLogo.png")}
               style={styles.logo}
               resizeMode="contain"
             />

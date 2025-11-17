@@ -56,7 +56,7 @@ export default function ModalJobDetail() {
   const imageSource =
   job.images && job.images.length > 0
     ? job.images              // array of URLs
-    : [require("../assets/images/brandlogo.png")];  // wrap fallback in array
+    : [require("../assets/images/brandLogo.png")];  // wrap fallback in array
 
   const title = job?.shop_name;
   const location = job?.location || "";

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Appearance, ColorSchemeName } from 'react-native';
+import { Appearance } from 'react-native';
 
 export function useColorScheme(): 'light' | 'dark' {
   const initial = (Appearance.getColorScheme() || 'light') as 'light' | 'dark';

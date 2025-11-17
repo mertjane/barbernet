@@ -144,7 +144,7 @@ export default function ShopsScreen() {
                 source={
                   item.images && item.images.length > 0
                     ? { uri: item.images[0] }
-                    : require("../../assets/images/brandlogo.png")
+                    : require("../../assets/images/brandLogo.png")
                 }
                 style={styles.cardImg}
               />

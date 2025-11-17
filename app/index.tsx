@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { styles } from "@/styles/_login.styles";
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView } from "react-native-safe-area-context";
+import { signInWithGoogleNative } from "@/services/auth-native.service";
 import {
   Image,
   View,
@@ -15,10 +16,6 @@ import {
 import { AntDesign, FontAwesome } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { hasEntered, markEntered } from "../lib/session";
-import {
-  useGoogleRequest,
-  signInWithGoogleResponse
-} from "@/services/auth.service";
 import * as AppleAuthentication from "expo-apple-authentication";
 import { getFirebaseAuth } from "../config/firebase-config";
 import { userStore } from "../lib/user-store";
@@ -30,16 +27,14 @@ import {
 
 import { registerUserInDB } from "../services/auth.api";
 import { getUserById } from "@/services/user.api";
+import { handleGoogleSignIn } from "@/services/google-auth.service";
 
-export default function Welcome() {
+export default function Index() {
   const router = useRouter();
-  const { request, response, promptAsync } = useGoogleRequest();
-  const [loading, setLoading] = useState(false);
-  const [appleAvailable, setAppleAvailable] = useState(false);
 
-  // ============================================
-  // STATE: Email & Password Input Fields
-  // ============================================
+  /* const { request, response, promptAsync } = useGoogleRequest(); */
+  const [loading, setLoading] = useState(false);
+  const [_appleAvailable, setAppleAvailable] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -57,11 +52,11 @@ export default function Welcome() {
   }, [router]);
 
   // Handle Google Sign-In Response
-  useEffect(() => {
+  /* useEffect(() => {
     if (response?.type === "success") {
       handleGoogleSignIn();
     }
-  }, [response]);
+  }, [response]); */
 
   // ============================================
   // HANDLER: Email/Password Login
@@ -89,7 +84,7 @@ export default function Welcome() {
       // ✅ Firebase users have 'uid', not 'id'
       const userId = user.uid;
 
-      console.log('Firebase User UID:', userId); // Debug log
+      console.log("Firebase User UID:", userId); // Debug log
 
       // ✅ Try to fetch user from DB first
       let userData;
@@ -116,19 +111,17 @@ export default function Welcome() {
         name: userData.name || "User",
         email: userData.email || "",
         phone: userData.phone || "",
-        photo: userData.photo
-          ? { uri: userData.photo }
-          : null,
+        photo: userData.photo ? { uri: userData.photo } : null,
       };
 
-      console.log('Saving user to store:', userForStore); // Debug log
+      console.log("Saving user to store:", userForStore); // Debug log
 
       // Update local store
       userStore.update(userForStore);
 
       // Verify it was saved
       const savedUser = userStore.get();
-      console.log('User store after update:', savedUser); // Debug log
+      console.log("User store after update:", savedUser); // Debug log
 
       // Mark session
       await markEntered();
@@ -162,53 +155,47 @@ export default function Welcome() {
     router.push("/register");
   };
 
+  /* useEffect(() => {
+    if (response?.type === "success") {
+      handleGoogleSignIn();
+    }
+  }, [response]); */
+
   // ============================================
   // HANDLER: Google Sign-In
   // ============================================
-  const handleGoogleSignIn = async () => {
+  /* const handleGoogleSignIn = async () => {
     try {
       setLoading(true);
       const userCredential = await signInWithGoogleResponse(response);
       const user = userCredential.user;
-
-      // ✅ Firebase users have 'uid', not 'id'
       const userId = user.uid;
 
-      console.log('Google Firebase User UID:', userId); // Debug log
-
-      // ✅ Try to fetch user from DB first
       let userData;
       try {
         userData = await getUserById(userId);
         console.log("Existing Google user found:", userData);
       } catch (error) {
-        // User doesn't exist in DB, create them
         console.log("Google user not found in DB, creating...");
         await registerUserInDB({
-          id: userId, // ✅ Use Firebase UID
+          id: userId,
           name: user.displayName || "User",
           email: user.email || "",
           phone: user.phoneNumber || "",
           photo: user.photoURL || undefined,
         });
-        // Fetch again after creating
         userData = await getUserById(userId);
       }
 
-      // ✅ Update user store with Firebase UID
       const userForStore = {
-        id: userId, // ✅ Use Firebase UID, not email!
+        id: userId,
         name: userData.name || "User",
         email: userData.email || "",
         phone: userData.phone || "",
-        photo: userData.photo
-          ? { uri: userData.photo }
-          : null,
+        photo: userData.photo ? { uri: userData.photo } : null,
       };
 
-      console.log('Saving Google user to store:', userForStore); // Debug log
       userStore.update(userForStore);
-
       await markEntered();
       router.replace("/(tabs)/home");
     } catch (error: any) {
@@ -220,18 +207,95 @@ export default function Welcome() {
     } finally {
       setLoading(false);
     }
-  };
+  }; */
 
+  // ✅ Updated onGoogle function
   const onGoogle = async () => {
     try {
       setLoading(true);
-      await promptAsync();
+      const userCredential = await handleGoogleSignIn(); // Uses smart detection
+      const user = userCredential.user;
+      const userId = user.uid;
+
+      let userData;
+      try {
+        userData = await getUserById(userId);
+      } catch (error) {
+        await registerUserInDB({
+          id: userId,
+          name: user.displayName || "User",
+          email: user.email || "",
+          phone: user.phoneNumber || "",
+          photo: user.photoURL || undefined,
+        });
+        userData = await getUserById(userId);
+      }
+
+      const userForStore = {
+        id: userId,
+        name: userData.name || "User",
+        email: userData.email || "",
+        phone: userData.phone || "",
+        photo: userData.photo ? { uri: userData.photo } : null,
+      };
+
+      userStore.update(userForStore);
+      await markEntered();
+      router.replace("/(tabs)/home");
     } catch (error: any) {
-      console.error("Error prompting Google sign-in:", error);
-      Alert.alert("Error", "Failed to start Google sign-in");
+      console.error("Google sign-in error:", error);
+      if (error.message !== "Google Sign-In not available in Expo Go") {
+        Alert.alert("Sign In Error", error.message || "Failed to sign in with Google");
+      }
+    } finally {
       setLoading(false);
     }
   };
+
+
+  /* const onGoogle = async () => {
+    try {
+      setLoading(true);
+
+      const userCredential = await signInWithGoogleNative();
+      const user = userCredential.user;
+      const userId = user.uid;
+
+      let userData;
+      try {
+        userData = await getUserById(userId);
+      } catch (error) {
+        await registerUserInDB({
+          id: userId,
+          name: user.displayName || "User",
+          email: user.email || "",
+          phone: user.phoneNumber || "",
+          photo: user.photoURL || undefined,
+        });
+        userData = await getUserById(userId);
+      }
+
+      const userForStore = {
+        id: userId,
+        name: userData.name || "User",
+        email: userData.email || "",
+        phone: userData.phone || "",
+        photo: userData.photo ? { uri: userData.photo } : null,
+      };
+
+      userStore.update(userForStore);
+      await markEntered();
+      router.replace("/(tabs)/home");
+    } catch (error: any) {
+      console.error("Google sign-in error:", error);
+      Alert.alert(
+        "Sign In Error",
+        error.message || "Failed to sign in with Google"
+      );
+    } finally {
+      setLoading(false);
+    }
+  }; */
 
   // ============================================
   // HANDLER: Apple Sign-In
@@ -265,7 +329,7 @@ export default function Welcome() {
       // ✅ Firebase users have 'uid', not 'id'
       const userId = user.uid;
 
-      console.log('Apple Firebase User UID:', userId); // Debug log
+      console.log("Apple Firebase User UID:", userId); // Debug log
 
       // ✅ Try to fetch user from DB first
       let userData;
@@ -298,12 +362,10 @@ export default function Welcome() {
         name: userData.name || "User",
         email: userData.email || "",
         phone: userData.phone || "",
-        photo: userData.photo
-          ? { uri: userData.photo }
-          : null,
+        photo: userData.photo ? { uri: userData.photo } : null,
       };
 
-      console.log('Saving Apple user to store:', userForStore); // Debug log
+      console.log("Saving Apple user to store:", userForStore); // Debug log
       userStore.update(userForStore);
 
       await markEntered();
@@ -335,7 +397,7 @@ export default function Welcome() {
           {/* ============================================ */}
           <View style={styles.header}>
             <Image
-              source={require("../assets/images/brandlogo.png")}
+              source={require("../assets/images/brandLogo.png")}
               style={styles.logo}
               resizeMode="contain"
             />
@@ -428,19 +490,19 @@ export default function Welcome() {
               <Text style={[styles.btnText, styles.googleText]}>Google</Text>
             </Pressable>
 
-             <Pressable
-                onPress={onApple}
-                style={[styles.button, styles.appleBtn]}
-                disabled={loading}
-              >
-                <FontAwesome
-                  name="apple"
-                  size={18}
-                  color="#FFFFFF"
-                  style={styles.icon}
-                />
-                <Text style={[styles.btnText, styles.appleText]}>Apple</Text>
-              </Pressable>
+            <Pressable
+              onPress={onApple}
+              style={[styles.button, styles.appleBtn]}
+              disabled={loading}
+            >
+              <FontAwesome
+                name="apple"
+                size={18}
+                color="#FFFFFF"
+                style={styles.icon}
+              />
+              <Text style={[styles.btnText, styles.appleText]}>Apple</Text>
+            </Pressable>
           </View>
           {/* ============================================ */}
           {/* SECTION: Register Link */}

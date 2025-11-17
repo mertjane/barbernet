@@ -151,7 +151,7 @@ function ProfileCard({ p }: { p: BarberProfile }) {
   const imageSource =
     p.images && p.images.length > 0
       ? { uri: p.images[0] }
-      : require("../../assets/images/brandlogo.png");
+      : require("../../assets/images/brandLogo.png");
 
   // Convert experience (string like "3 years" or "0-1 years") to display-friendly
   const experienceText = p.experience.includes("year")
