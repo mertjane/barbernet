@@ -2,11 +2,9 @@ import axios from "axios";
 import { Platform } from "react-native";
 
 const getBaseURL = () => {
-  // Check if we're in production (web deployment)
-  const isProduction = process.env.NODE_ENV === "production" && Platform.OS === "web";
-  
-  if (isProduction) {
-    return process.env.EXPO_PUBLIC_API_URL_PRODUCTION;
+  // Always use production URL in production builds
+  if (process.env.NODE_ENV === "production") {
+    return process.env.EXPO_PUBLIC_API_URL_PRODUCTION || "https://barbernet-backend-q8id.onrender.com/api";
   }
   
   // Development URLs

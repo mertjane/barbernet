@@ -6,13 +6,22 @@
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_API_URL_PRODUCTION": "https://barbernet-backend-q8id.onrender.com/api"
+      }
     },
     "preview": {
-      "distribution": "internal"
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_API_URL_PRODUCTION": "https://barbernet-backend-q8id.onrender.com/api"
+      }
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_API_URL_PRODUCTION": "https://barbernet-backend-q8id.onrender.com/api"
+      }
     }
   },
   "submit": {
