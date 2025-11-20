@@ -3,12 +3,15 @@
     "name": "barbernet",
     "slug": "barbernet",
     "version": "1.0.0",
-    "platforms": ["ios", "android", "web"],
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "barbernet",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
     "splash": {
       "image": "./assets/images/icon.png",
       "resizeMode": "contain",
@@ -19,14 +22,21 @@
       "bundleIdentifier": "com.dev.barbernet",
       "googleServicesFile": "./GoogleService-Info.plist",
       "icon": "./assets/images/icon.png",
+      "usesAppleSignIn": true,
       "infoPlist": {
         "CFBundleURLTypes": [
           {
             "CFBundleURLSchemes": [
               "com.googleusercontent.apps.475618421121-qjh88jphig737glm6t4f955qfdrs00hm"
             ]
+          },
+          {
+            "CFBundleURLSchemes": [
+              "com.googleusercontent.apps.475618421121-qjh88jphig737glm6t4f955qfdrs00hm"
+            ]
           }
-        ]
+        ],
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -42,15 +52,16 @@
               "host": "oauth2redirect"
             }
           ],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#0D9488"
-      },
-      "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      }
     },
     "web": {
       "bundler": "metro",
@@ -75,12 +86,10 @@
             "backgroundColor": "#0D9488"
           }
         }
-      ],
-      "expo-web-browser"
+      ]
     ],
     "experiments": {
-      "typedRoutes": true,
-      "reactCompiler": true
+      "typedRoutes": true
     },
     "extra": {
       "firebase": {
@@ -93,7 +102,7 @@
       },
       "router": {},
       "eas": {
-        "projectId": "fb3f5d93-16a5-4062-9f33-e5b8f921876c"
+        "projectId": "eb46af1a-e161-4d56-ad4d-23a6b7dd7025"
       }
     },
     "owner": "diplodev"
