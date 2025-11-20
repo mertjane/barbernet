@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { onAuth, type AuthState } from '../../services/google-auth.service';
+import { onAuth, type AuthState } from '@/services/google-auth.service';
 import { User } from 'firebase/auth';
 import * as AuthSession from 'expo-auth-session';
 

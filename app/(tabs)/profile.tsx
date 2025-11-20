@@ -1,7 +1,6 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
-  
   View,
   Text,
   StyleSheet,
@@ -12,7 +11,7 @@ import {
   ScrollView,
   Platform,
 } from "react-native";
-import * as FileSystem from "expo-file-system/legacy";
+import * as FileSystem from "expo-file-system";
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { clearEntered } from "../../lib/session";
@@ -138,8 +137,8 @@ export default function ProfileScreen() {
     }
 
     const res = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"], // Updated from deprecated MediaTypeOptions
-      quality: 0.5, // Reduced quality to keep size smaller
+      mediaTypes: ImagePicker.MediaTypeOptions.Images, // Use the enum
+      quality: 0.5,
       allowsEditing: true,
       aspect: [1, 1],
     });

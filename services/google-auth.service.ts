@@ -1,7 +1,9 @@
 import { Alert, Platform } from 'react-native';
 import Constants from 'expo-constants';
-import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { User, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { getFirebaseAuth } from '../config/firebase-config';
+
+
 
 // Check if we're in a development build with native modules
 const isDevBuild = Constants.appOwnership !== 'expo';
@@ -18,6 +20,17 @@ if (isDevBuild && !isWeb) {
   } catch (error) {
     console.log('Native Google Sign-In not available');
   }
+}
+
+export type AuthState = {
+  user: User | null;
+  loading: boolean;
+};
+
+
+export function onAuth(callback: (user: User | null) => void) {
+  const auth = getFirebaseAuth();
+  return auth.onAuthStateChanged(callback);
 }
 
 export async function handleGoogleSignIn() {

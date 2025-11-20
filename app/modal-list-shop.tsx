@@ -15,7 +15,7 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { shopsStore } from "../lib/../lib/shops-store";
 import * as ImagePicker from "expo-image-picker";
-import * as FileSystem from "expo-file-system/legacy";
+import * as FileSystem from "expo-file-system";
 import { getFirebaseAuth } from "@/config/firebase-config";
 
 interface FormState {
@@ -91,10 +91,10 @@ export default function ModalListShop() {
     }
 
     const res = await ImagePicker.launchImageLibraryAsync({
-      allowsMultipleSelection: true,
-      mediaTypes: ["images"],
-      quality: 0.3, // Reduced from 0.7 to 0.3
-      allowsEditing: false,
+      mediaTypes: ImagePicker.MediaTypeOptions.Images, // Use the enum
+      quality: 0.5,
+      allowsEditing: true,
+      aspect: [1, 1],
     });
 
     if (!res.canceled && res.assets) {
@@ -207,7 +207,7 @@ export default function ModalListShop() {
             style={[
               styles.input,
               focusField === "name" && styles.inputFocus,
-              errors.name && styles.inputError,
+              !!errors.name && styles.inputError,
             ]}
           />
           {errors.name ? <Text style={styles.err}>{errors.name}</Text> : null}
@@ -220,7 +220,7 @@ export default function ModalListShop() {
             style={[
               styles.inputRow,
               focusField === "phone" && styles.inputFocus,
-              errors.phone && styles.inputError,
+              !!errors.phone && styles.inputError,
             ]}
           >
             <Feather name="phone" size={16} color="#6B7280" />
@@ -251,7 +251,7 @@ export default function ModalListShop() {
             style={[
               styles.inputRow,
               focusField === "price" && styles.inputFocus,
-              errors.price && styles.inputError,
+              !!errors.price && styles.inputError,
             ]}
           >
             <Text style={{ color: "#6B7280", fontWeight: "700" }}>£</Text>
@@ -284,7 +284,7 @@ export default function ModalListShop() {
             style={[
               styles.inputRow,
               focusField === "location" && styles.inputFocus,
-              errors.location && styles.inputError,
+              !!errors.location && styles.inputError,
             ]}
           >
             <Ionicons name="location-outline" size={16} color="#6B7280" />
@@ -319,7 +319,7 @@ export default function ModalListShop() {
             style={[
               styles.textarea,
               focusField === "description" && styles.inputFocus,
-              errors.description && styles.inputError,
+              !!errors.description && styles.inputError,
             ]}
           />
           {errors.description ? (

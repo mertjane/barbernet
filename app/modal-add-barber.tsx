@@ -13,7 +13,7 @@ import {
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
-import * as FileSystem from "expo-file-system/legacy";
+import * as FileSystem from "expo-file-system";
 import { barbersStore, type City, CITIES } from "../lib/barbers-store";
 import { getFirebaseAuth } from "@/config/firebase-config";
 
@@ -196,16 +196,16 @@ export default function ModalAddBarber() {
       return;
     }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"],
-      quality: 0.7,
+    const res = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images, // Use the enum
+      quality: 0.5,
       allowsEditing: true,
       aspect: [1, 1],
     });
 
-    if (!result.canceled && result.assets && result.assets.length > 0) {
+    if (!res.canceled && res.assets && res.assets.length > 0) {
       try {
-        const imageUri = result.assets[0].uri;
+        const imageUri = res.assets[0].uri;
 
         // Convert to base64
         const base64 = await FileSystem.readAsStringAsync(imageUri, {
@@ -318,7 +318,7 @@ export default function ModalAddBarber() {
           placeholderTextColor="#9CA3AF"
           value={form.full_name}
           onChangeText={(v) => setForm((p) => ({ ...p, full_name: v }))}
-          style={[styles.input, errors.full_name && styles.inputError]}
+          style={[styles.input, !!errors.full_name && styles.inputError]}
         />
         {errors.full_name ? (
           <Text style={styles.err}>{errors.full_name}</Text>
@@ -362,7 +362,7 @@ export default function ModalAddBarber() {
           numberOfLines={4}
           value={form.bio}
           onChangeText={(v) => setForm((p) => ({ ...p, bio: v }))}
-          style={[styles.textarea, errors.bio && styles.inputError]}
+          style={[styles.textarea, !!errors.bio && styles.inputError]}
         />
         {errors.bio ? <Text style={styles.err}>{errors.bio}</Text> : null}
 
@@ -372,7 +372,7 @@ export default function ModalAddBarber() {
           keyboardType="phone-pad"
           value={form.phone_number}
           onChangeText={(v) => setForm((p) => ({ ...p, phone_number: v }))}
-          style={[styles.input, errors.phone_number && styles.inputError]}
+          style={[styles.input, !!errors.phone_number && styles.inputError]}
         />
         {errors.phone_number ? (
           <Text style={styles.err}>{errors.phone_number}</Text>
@@ -385,14 +385,14 @@ export default function ModalAddBarber() {
           keyboardType="email-address"
           value={form.email}
           onChangeText={(v) => setForm((p) => ({ ...p, email: v }))}
-          style={[styles.input, errors.email && styles.inputError]}
+          style={[styles.input, !!errors.email && styles.inputError]}
         />
         {errors.email ? <Text style={styles.err}>{errors.email}</Text> : null}
 
         {/* Experience moved below contact and above skills; optional */}
         <View>
           <Pressable
-            style={[styles.dropdown, errors.experience && styles.inputError]}
+            style={[styles.dropdown, !!errors.experience && styles.inputError]}
             onPress={() => setOpenExperience((v) => !v)}
           >
             <Text style={styles.dropdownLabel}>

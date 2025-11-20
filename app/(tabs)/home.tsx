@@ -257,7 +257,7 @@ function FeatureCard({
       style={styles.card}
     >
       <LinearGradient
-        colors={colors || (["#111827", "#111827"] as const)}
+        colors={(colors || ["#111827", "#111827"]) as string[]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.cardBg}

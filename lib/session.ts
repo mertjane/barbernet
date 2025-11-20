@@ -1,6 +1,4 @@
-// Lightweight session persistence with optional expo-secure-store
-// Works even if the module is not yet installed (no-ops), but persistence
-// will be enabled once expo-secure-store is added.
+import * as SecureStore from 'expo-secure-store';
 
 const KEY = 'app.hasEntered';
 
@@ -10,10 +8,9 @@ type SecureStoreModule = {
   deleteItemAsync: (k: string) => Promise<void>;
 };
 
-async function getSecureStore(): Promise<SecureStoreModule | null> {
+function getSecureStore(): SecureStoreModule | null {
   try {
-    const mod = await import('expo-secure-store');
-    return (mod as unknown) as SecureStoreModule;
+    return SecureStore as SecureStoreModule;
   } catch {
     return null;
   }

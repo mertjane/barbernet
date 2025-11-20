@@ -1,7 +1,6 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
-  
   View,
   Text,
   StyleSheet,
@@ -16,7 +15,7 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import { jobsStore, type JobType, type JobListing } from "../lib/jobs-store";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
-import * as FileSystem from "expo-file-system/legacy";
+import * as FileSystem from "expo-file-system";
 import { userStore } from "../lib/user-store";
 import { styles } from "@/styles/_modal-post-job.styles";
 
@@ -58,8 +57,6 @@ export default function ModalPostJob() {
   const [loading, setLoading] = useState(false);
   const [focusField, setFocusField] = useState<string | null>(null);
 
- 
-
   // Load existing job data if editing
   useEffect(() => {
     if (!id) return;
@@ -68,10 +65,10 @@ export default function ModalPostJob() {
       // Convert API type to display type
       const displayType = Object.entries(JOB_TYPE_DISPLAY).find(
         ([_, apiType]) => apiType === existing.job_type
-      )?.[0]; 
+      )?.[0];
 
       setForm({
-        shopName: existing.shop_name || "", 
+        shopName: existing.shop_name || "",
         location: existing.location || "",
         type: displayType,
         salaryText: existing.salary_text || "",
@@ -99,38 +96,39 @@ export default function ModalPostJob() {
   }, [form]);
 
   const pickImages = async () => {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== "granted") {
-        Alert.alert("Permission", "Please allow photo library access.");
-        return;
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert("Permission", "Please allow photo library access.");
+      return;
+    }
+
+    const res = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsMultipleSelection: true, // Use the enum
+      quality: 0.5,
+      allowsEditing: true,
+      aspect: [1, 1],
+    });
+
+    if (!res.canceled && res.assets) {
+      try {
+        const space = Math.max(0, 4 - form.images.length);
+        const newImages = await Promise.all(
+          res.assets.slice(0, space).map(async (asset) => {
+            const base64 = await FileSystem.readAsStringAsync(asset.uri, {
+              encoding: "base64",
+            });
+            return `data:image/jpeg;base64,${base64}`;
+          })
+        );
+
+        setForm((p) => ({ ...p, images: [...p.images, ...newImages] }));
+      } catch (error) {
+        console.error("Error converting images:", error);
+        Alert.alert("Error", "Failed to process images");
       }
-  
-      const res = await ImagePicker.launchImageLibraryAsync({
-        allowsMultipleSelection: true,
-        mediaTypes: ["images"],
-        quality: 0.3, // Reduced from 0.7 to 0.3
-        allowsEditing: false,
-      });
-  
-      if (!res.canceled && res.assets) {
-        try {
-          const space = Math.max(0, 4 - form.images.length);
-          const newImages = await Promise.all(
-            res.assets.slice(0, space).map(async (asset) => {
-              const base64 = await FileSystem.readAsStringAsync(asset.uri, {
-                encoding: "base64",
-              });
-              return `data:image/jpeg;base64,${base64}`;
-            })
-          );
-  
-          setForm((p) => ({ ...p, images: [...p.images, ...newImages] }));
-        } catch (error) {
-          console.error("Error converting images:", error);
-          Alert.alert("Error", "Failed to process images");
-        }
-      }
-    };
+    }
+  };
 
   const removeImage = (idx: number) => {
     setForm((p) => ({ ...p, images: p.images.filter((_, i) => i !== idx) }));
@@ -138,14 +136,14 @@ export default function ModalPostJob() {
 
   const submit = async () => {
     if (!isValid || loading) return;
-    
+
     const owner = userStore.get();
-    
+
     setLoading(true);
-    
+
     try {
-      const apiType = form.type ? JOB_TYPE_DISPLAY[form.type] : 'Full-time';
-      
+      const apiType = form.type ? JOB_TYPE_DISPLAY[form.type] : "Full-time";
+
       // ✅ Match backend field names exactly
       const payload: Omit<JobListing, "id" | "created_at" | "updated_at"> = {
         shop_name: form.shopName.trim(),
@@ -158,22 +156,24 @@ export default function ModalPostJob() {
         owner_id: owner.id,
       };
 
-      console.log('Sending payload:', payload);
+      console.log("Sending payload:", payload);
 
       if (id) {
         await jobsStore.update(String(id), owner.id, payload);
-        Alert.alert('Success', 'Job updated successfully!');
+        Alert.alert("Success", "Job updated successfully!");
       } else {
         await jobsStore.add(payload);
-        Alert.alert('Success', 'Job posted successfully!');
+        Alert.alert("Success", "Job posted successfully!");
       }
-      
+
       router.back();
     } catch (error: any) {
-      console.error('Error posting job:', error);
+      console.error("Error posting job:", error);
       Alert.alert(
-        'Error', 
-        error.response?.data?.error || error.message || 'Failed to post job. Please try again.'
+        "Error",
+        error.response?.data?.error ||
+          error.message ||
+          "Failed to post job. Please try again."
       );
     } finally {
       setLoading(false);
@@ -212,7 +212,7 @@ export default function ModalPostJob() {
             style={[
               styles.inputRow,
               focusField === "shopName" && styles.inputFocus,
-              errors.shopName && styles.inputError,
+              !!errors.shopName && styles.inputError,
             ]}
           >
             <Feather name="briefcase" size={16} color="#6B7280" />
@@ -239,7 +239,7 @@ export default function ModalPostJob() {
             style={[
               styles.inputRow,
               focusField === "phone" && styles.inputFocus,
-              errors.phone && styles.inputError,
+              !!errors.phone && styles.inputError,
             ]}
           >
             <Feather name="phone" size={16} color="#6B7280" />
@@ -271,7 +271,7 @@ export default function ModalPostJob() {
             style={[
               styles.inputRow,
               focusField === "location" && styles.inputFocus,
-              errors.location && styles.inputError,
+              !!errors.location && styles.inputError,
             ]}
           >
             <Ionicons name="location-outline" size={16} color="#6B7280" />
@@ -298,7 +298,7 @@ export default function ModalPostJob() {
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Select job type"
-              style={[styles.select, errors.type && styles.inputError]}
+              style={[styles.select, !!errors.type && styles.inputError]}
               onPress={() => setOpenType((v) => !v)}
             >
               <Text style={styles.selectLabel}>
@@ -337,7 +337,7 @@ export default function ModalPostJob() {
             style={[
               styles.inputRow,
               focusField === "salary" && styles.inputFocus,
-              errors.salaryText && styles.inputError,
+              !!errors.salaryText && styles.inputError,
             ]}
           >
             <Text style={{ color: "#6B7280", fontWeight: "700" }}>£</Text>
@@ -369,7 +369,7 @@ export default function ModalPostJob() {
             style={[
               styles.textarea,
               focusField === "desc" && styles.inputFocus,
-              errors.description && styles.inputError,
+              !!errors.description && styles.inputError,
             ]}
             value={form.description}
             onFocus={() => setFocusField("desc")}
@@ -448,4 +448,3 @@ export default function ModalPostJob() {
     </SafeAreaView>
   );
 }
-
