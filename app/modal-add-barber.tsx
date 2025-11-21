@@ -9,6 +9,7 @@ import {
   Image,
   TextInput,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Feather } from "@expo/vector-icons";
@@ -197,22 +198,21 @@ export default function ModalAddBarber() {
     }
 
     const res = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images, // Use the enum
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
       quality: 0.5,
       allowsEditing: true,
       aspect: [1, 1],
+      base64: true, // Request base64
     });
 
     if (!res.canceled && res.assets && res.assets.length > 0) {
       try {
-        const imageUri = res.assets[0].uri;
+        const asset = res.assets[0];
 
-        // Convert to base64
-        const base64 = await FileSystem.readAsStringAsync(imageUri, {
-          encoding: "base64",
-        });
-
-        const base64Uri = `data:image/jpeg;base64,${base64}`;
+        // Use base64 directly from asset
+        const base64Uri = asset.base64
+          ? `data:image/jpeg;base64,${asset.base64}`
+          : asset.uri; // Fallback to URI
 
         // Add to images array (replace first image if exists, or add new)
         setForm((prev) => ({
@@ -220,7 +220,7 @@ export default function ModalAddBarber() {
           images: [base64Uri, ...prev.images.slice(1)],
         }));
       } catch (error) {
-        console.error("Error converting image:", error);
+        console.error("Error processing image:", error);
         Alert.alert("Error", "Failed to process image");
       }
     }
@@ -508,12 +508,18 @@ export default function ModalAddBarber() {
       </ScrollView>
       <View style={styles.footer}>
         <Pressable
-          style={styles.footerBtn}
-          disabled={isLoading}
+          accessibilityRole="button"
           onPress={submit}
-          accessibilityLabel="Create Profile"
+          disabled={!valid || isLoading}
+          style={styles.footerBtn}
         >
-          <Text style={styles.footerBtnText}>Create Profile</Text>
+          {isLoading ? (
+            <ActivityIndicator color="#FFFFFF" />
+          ) : (
+            <Text style={styles.footerBtnText}>
+              {id ? "Update Profile" : "Create Profile"}
+            </Text>
+          )}
         </Pressable>
         <Text style={styles.footerHelp}>
           Your profile will be visible to potential employers immediately
@@ -525,11 +531,11 @@ export default function ModalAddBarber() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: "#FFFFFF" },
-  scroll: { padding: 16, marginTop: 24 },
+  scroll: { padding: 16, marginTop: 12 },
   headerRow: {
     flexDirection: "row",
     alignItems: "flex-start",
-    marginBottom: 8,
+    marginBottom: 4,
   },
   backBtn: {
     width: 36,
@@ -664,7 +670,7 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     padding: 12,
-    paddingBottom: 20,
+    paddingBottom: 46,
     backgroundColor: "#FFFFFF",
     borderTopWidth: 1,
     borderTopColor: "#E5E7EB",
@@ -675,6 +681,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#10B981",
     alignItems: "center",
     justifyContent: "center",
+  },
+  footerBtnDisabled: {
+    opacity: 0.6, // Dim button when loading
   },
   footerBtnText: { color: "#FFFFFF", fontWeight: "700" },
   footerHelp: {

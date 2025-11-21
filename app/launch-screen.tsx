@@ -1,19 +1,21 @@
-import React, { useEffect } from "react";
-import { View, Text, Image, StyleSheet, Animated, Platform } from "react-native";
-import { useRouter } from "expo-router";
-import { hasEntered } from "../lib/session";
+import React, { useEffect, useRef, useState } from "react";
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  Animated,
+  Platform,
+} from "react-native";
 
-interface LaunchScreenProps {
-  onFinish?: () => void; // ✅ Add optional callback
-}
-
-export default function LaunchScreen({ onFinish }: LaunchScreenProps) {
-  const router = useRouter();
-  const fadeAnim = new Animated.Value(0);
-  const scaleAnim = new Animated.Value(0.8);
+export default function LaunchScreen() {
+  const [animComplete, setAnimComplete] = useState(false);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(0.8)).current;
 
   useEffect(() => {
-    // Fade in animation
+    // console.log("Starting animation");
+
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
@@ -26,27 +28,11 @@ export default function LaunchScreen({ onFinish }: LaunchScreenProps) {
         tension: 40,
         useNativeDriver: true,
       }),
-    ]).start();
-
-    // Navigate after 2.5 seconds
-    const timer = setTimeout(async () => {
-      // ✅ If callback provided (embedded mode), use it
-      if (onFinish) {
-        onFinish();
-        return;
-      }
-
-      // ✅ Otherwise, use router (standalone mode)
-      const seen = await hasEntered();
-      if (seen) {
-        router.replace("/(tabs)/home");
-      } else {
-        router.replace("/");
-      }
-    }, 2500);
-
-    return () => clearTimeout(timer);
-  }, [onFinish]);
+    ]).start(() => {
+      // console.log("Animation completed");
+      setAnimComplete(true);
+    });
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -70,10 +56,10 @@ export default function LaunchScreen({ onFinish }: LaunchScreenProps) {
 
         {/* App Name */}
         <Text style={styles.appName}>BarberNet</Text>
-        
+
         {/* Subtitle */}
         <Text style={styles.subtitle}>UK Barber Network</Text>
-        
+
         {/* Tagline */}
         <Text style={styles.tagline}>
           Connecting barbers, shops & suppliers
@@ -86,6 +72,8 @@ export default function LaunchScreen({ onFinish }: LaunchScreenProps) {
           <View style={[styles.dot, styles.dotActive]} />
         </View>
       </Animated.View>
+
+     
     </View>
   );
 }
@@ -93,28 +81,28 @@ export default function LaunchScreen({ onFinish }: LaunchScreenProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0D9488',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#0D9488",
+    justifyContent: "center",
+    alignItems: "center",
   },
   content: {
-    alignItems: 'center',
+    alignItems: "center",
     paddingHorizontal: 40,
   },
   logoCircle: {
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: '#FFFFFF',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#FFFFFF",
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 32,
     ...Platform.select({
       web: {
-        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.15)',
+        boxShadow: "0 4px 16px rgba(0, 0, 0, 0.15)",
       },
       default: {
-        shadowColor: '#000',
+        shadowColor: "#000",
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.15,
         shadowRadius: 8,
@@ -128,34 +116,34 @@ const styles = StyleSheet.create({
   },
   appName: {
     fontSize: 36,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
+    fontWeight: "bold",
+    color: "#FFFFFF",
     marginBottom: 8,
     letterSpacing: 0.5,
   },
   subtitle: {
     fontSize: 16,
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     opacity: 0.9,
     marginBottom: 4,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   tagline: {
     fontSize: 14,
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     opacity: 0.8,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 48,
   },
   dotsContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 8,
   },
   dot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     opacity: 0.4,
   },
   dotActive: {

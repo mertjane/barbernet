@@ -10,6 +10,7 @@ import {
   Alert,
   Image,
   Platform,
+  ActivityIndicator,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { jobsStore, type JobType, type JobListing } from "../lib/jobs-store";
@@ -104,27 +105,27 @@ export default function ModalPostJob() {
 
     const res = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsMultipleSelection: true, // Use the enum
+      allowsMultipleSelection: true, // ✅ Enable multiple selection
       quality: 0.5,
-      allowsEditing: true,
-      aspect: [1, 1],
+      base64: true, // Get base64 directly from picker
+      selectionLimit: 4, // Optional: limit to 4 images
     });
 
     if (!res.canceled && res.assets) {
       try {
         const space = Math.max(0, 4 - form.images.length);
-        const newImages = await Promise.all(
-          res.assets.slice(0, space).map(async (asset) => {
-            const base64 = await FileSystem.readAsStringAsync(asset.uri, {
-              encoding: "base64",
-            });
-            return `data:image/jpeg;base64,${base64}`;
-          })
-        );
+
+        // ✅ Use base64 directly from assets
+        const newImages = res.assets.slice(0, space).map((asset) => {
+          if (asset.base64) {
+            return `data:image/jpeg;base64,${asset.base64}`;
+          }
+          return asset.uri; // Fallback to URI if base64 not available
+        });
 
         setForm((p) => ({ ...p, images: [...p.images, ...newImages] }));
       } catch (error) {
-        console.error("Error converting images:", error);
+        console.error("Error processing images:", error);
         Alert.alert("Error", "Failed to process images");
       }
     }
@@ -433,7 +434,7 @@ export default function ModalPostJob() {
             ]}
           >
             {loading ? (
-              <Feather name="loader" size={18} color="#FFFFFF" />
+              <ActivityIndicator color="#FFFFFF" />
             ) : (
               <Text style={styles.postBtnText}>
                 {id ? "Update Job" : "Post Job"}

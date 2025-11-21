@@ -9,11 +9,11 @@ export function useAuth(): AuthState {
 
   useEffect(() => {
     const redirectUri = AuthSession.makeRedirectUri();
-    console.log("🔗 Default redirect URI:", redirectUri);
+    console.log("Default redirect URI:", redirectUri);
 
     // ✅ useProxy works at runtime — just cast to any to bypass TS
     const proxyRedirectUri = AuthSession.makeRedirectUri({ useProxy: true } as any);
-    console.log("🔗 Proxy redirect URI:", proxyRedirectUri);
+    console.log("Proxy redirect URI:", proxyRedirectUri);
   }, []);
 
 

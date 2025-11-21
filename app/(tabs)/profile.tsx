@@ -10,6 +10,7 @@ import {
   Alert,
   ScrollView,
   Platform,
+  ActivityIndicator,
 } from "react-native";
 import * as FileSystem from "expo-file-system";
 import { Feather } from "@expo/vector-icons";
@@ -34,6 +35,7 @@ type Mode = "view" | "edit";
 export default function ProfileScreen() {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("view");
+  const [loading, setLoading] = useState<boolean>(false);
   const [user, setUser] = useState<UserProfile>(userStore.get());
   const [jobs, setJobs] = useState<StoreJob[]>(jobsStore.get());
   const [barbers, setBarbers] = useState<StoreBarber[]>(barbersStore.get());
@@ -98,6 +100,8 @@ export default function ProfileScreen() {
 
   const onSave = async () => {
     if (!canSave) return;
+
+    setLoading(true);
     try {
       // Call backend API
       const updatedUser = await updateUserApi({
@@ -122,6 +126,8 @@ export default function ProfileScreen() {
       Alert.alert("Profile Updated", "Your changes have been saved.");
     } catch (err: any) {
       Alert.alert("Update Failed", err.message || "Something went wrong");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -141,27 +147,31 @@ export default function ProfileScreen() {
       quality: 0.5,
       allowsEditing: true,
       aspect: [1, 1],
+      base64: true,
     });
 
     if (!res.canceled && res.assets && res.assets.length > 0) {
       try {
-        const imageUri = res.assets[0].uri;
+        const asset = res.assets[0];
 
-        // Convert to base64
-        const base64 = await FileSystem.readAsStringAsync(imageUri, {
-          encoding: "base64",
-        });
+        // Use base64 from ImagePicker response
+        if (asset.base64) {
+          const base64Uri = `data:image/jpeg;base64,${asset.base64}`;
+          setUser((prev) => ({ ...prev, photo: { uri: base64Uri } }));
 
-        // Create data URI
-        const base64Uri = `data:image/jpeg;base64,${base64}`;
+          if (isView) {
+            setMode("edit");
+          }
+        } else {
+          // Fallback: just use the URI directly
+          setUser((prev) => ({ ...prev, photo: { uri: asset.uri } }));
 
-        setUser((prev) => ({ ...prev, photo: { uri: base64Uri } }));
-
-        if (isView) {
-          setMode("edit");
+          if (isView) {
+            setMode("edit");
+          }
         }
       } catch (error) {
-        console.error("Error converting image:", error);
+        console.error("Error processing image:", error);
         Alert.alert("Error", "Failed to process image");
       }
     }
@@ -293,10 +303,14 @@ export default function ProfileScreen() {
             </Pressable>
             <Pressable
               style={[styles.primaryBtn, !canSave && styles.btnDisabled]}
-              disabled={!canSave}
+              disabled={!canSave || loading}
               onPress={onSave}
             >
-              <Text style={styles.primaryBtnText}>Save Changes</Text>
+              {loading ? (
+                <ActivityIndicator color="#FFFFFF" size="small" />
+              ) : (
+                <Text style={styles.primaryBtnText}>Save Changes</Text>
+              )}
             </Pressable>
           </View>
         )}

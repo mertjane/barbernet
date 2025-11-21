@@ -14,7 +14,12 @@ import {
 } from "react-native";
 import { AntDesign, FontAwesome } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { hasEntered, markEntered } from "../lib/session";
+import {
+  clearEntered,
+  getStoredUserId,
+  hasEntered,
+  markEntered,
+} from "../lib/session";
 import * as AppleAuthentication from "expo-apple-authentication";
 import { getFirebaseAuth } from "../config/firebase-config";
 import { userStore } from "../lib/user-store";
@@ -38,48 +43,85 @@ export default function Index() {
   const [_appleAvailable, setAppleAvailable] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
-  const [showLaunchScreen, setShowLaunchScreen] = useState(
-    Platform.OS === "web"
-  );
+  const [showLaunchScreen, setShowLaunchScreen] = useState<boolean>(true);
+  const [isCheckingAuth, setIsCheckingAuth] = useState<boolean>(true);
 
   useEffect(() => {
-    (async () => {
-      // On web, DON'T navigate here - let the timer handle it
-      if (Platform.OS === "web" && process.env.NODE_ENV === "production") {
-        pingBackend(); // Fire and forget
-      }
+    const checkAuth = async () => {
+      try {
+        console.log("🔍 Starting auth check...");
 
-      if (Platform.OS === "web") {
-        // Just wait for launch screen to finish
-        return;
-      }
+        if (Platform.OS === "web" && process.env.NODE_ENV === "production") {
+          pingBackend();
+        }
 
-      // On mobile, check session immediately
-      const seen = await hasEntered();
-      if (seen) router.replace("/(tabs)/home");
+        // ✅ Check if we have a stored user ID
+        const storedUserId = await getStoredUserId();
+        const seen = await hasEntered();
 
-      // Check if Apple Sign In is available
-      if (Platform.OS === "ios") {
-        const isAvailable = await AppleAuthentication.isAvailableAsync();
-        setAppleAvailable(isAvailable);
-      }
-    })();
-  }, [router]);
+        console.log("💾 Stored user ID:", storedUserId, "Session:", seen);
 
-  // ✅ Show launch screen on web with callback
-  if (showLaunchScreen && Platform.OS === "web") {
-    return (
-      <LaunchScreen
-        onFinish={() => {
-          console.log("✅ Launch screen finished");
+        if (storedUserId && seen) {
+          // ✅ We have a stored session, load user directly
+          try {
+            const userData = await getUserById(storedUserId);
+            const userForStore = {
+              id: storedUserId,
+              name: userData.name || "User",
+              email: userData.email || "",
+              phone: userData.phone || "",
+              photo: userData.photo ? { uri: userData.photo } : null,
+            };
+            userStore.update(userForStore);
+            console.log("✅ User loaded from stored session");
+
+            setTimeout(() => {
+              setShowLaunchScreen(false);
+              setIsCheckingAuth(false);
+              router.replace("/(tabs)/home");
+            }, 2500);
+            return; // ✅ Exit early, don't wait for Firebase
+          } catch (error) {
+            console.error("❌ Error loading stored user:", error);
+            await clearEntered();
+          }
+        }
+
+        // ✅ No stored session, wait for Firebase or show login
+        setTimeout(() => {
           setShowLaunchScreen(false);
-        }}
-      />
-    );
+          setIsCheckingAuth(false);
+        }, 2500);
+
+        if (Platform.OS === "ios") {
+          const isAvailable = await AppleAuthentication.isAvailableAsync();
+          setAppleAvailable(isAvailable);
+        }
+      } catch (error) {
+        console.error("❌ Auth check error:", error);
+        setTimeout(() => {
+          setShowLaunchScreen(false);
+          setIsCheckingAuth(false);
+        }, 2500);
+      }
+    };
+
+    checkAuth();
+  }, []);
+
+  // Show launch screen for all platforms
+  if (showLaunchScreen) {
+    return <LaunchScreen />;
   }
 
-
+  // Show loading while checking auth
+  if (isCheckingAuth) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" color="#10B981" />
+      </View>
+    );
+  }
 
   // ============================================
   // HANDLER: Email/Password Login
@@ -147,7 +189,7 @@ export default function Index() {
       console.log("User store after update:", savedUser); // Debug log
 
       // Mark session
-      await markEntered();
+      await markEntered(userId); 
       router.replace("/(tabs)/home");
     } catch (error: any) {
       console.error("Login error:", error);
@@ -177,8 +219,6 @@ export default function Index() {
   const handleNavigateToRegister = () => {
     router.push("/register");
   };
-
- 
 
   // Updated onGoogle function
   const onGoogle = async () => {
@@ -211,7 +251,7 @@ export default function Index() {
       };
 
       userStore.update(userForStore);
-      await markEntered();
+      await markEntered(userId);
       router.replace("/(tabs)/home");
     } catch (error: any) {
       console.error("Google sign-in error:", error);
@@ -225,8 +265,6 @@ export default function Index() {
       setLoading(false);
     }
   };
-
-
 
   // ============================================
   // HANDLER: Apple Sign-In
@@ -299,7 +337,7 @@ export default function Index() {
       console.log("Saving Apple user to store:", userForStore); // Debug log
       userStore.update(userForStore);
 
-      await markEntered();
+      await markEntered(userId);
       router.replace("/(tabs)/home");
     } catch (error: any) {
       if (error.code === "ERR_REQUEST_CANCELED") {

@@ -1,12 +1,15 @@
-// Firebase initialization
 import Constants from 'expo-constants';
 import { initializeApp, getApps, type FirebaseOptions } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import { 
+  getAuth, 
+  initializeAuth, 
+  indexedDBLocalPersistence,
+  inMemoryPersistence 
+} from 'firebase/auth';
+import { Platform } from 'react-native';
 
 const extra = (Constants?.expoConfig as any)?.extra || {};
 const fromExtra: Partial<FirebaseOptions> = extra.firebase || {};
-
-
 
 const firebaseConfig: FirebaseOptions = {
   apiKey: fromExtra.apiKey || 'YOUR_API_KEY',
@@ -17,14 +20,31 @@ const firebaseConfig: FirebaseOptions = {
   storageBucket: (fromExtra as any).storageBucket || 'YOUR_STORAGE_BUCKET',
 };
 
+let firebaseApp: any;
+let firebaseAuthInstance: any;
+
 export function getFirebaseApp() {
-  if (!getApps().length) {
-    return initializeApp(firebaseConfig);
+  if (!firebaseApp) {
+    firebaseApp = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
   }
-  return getApps()[0];
+  return firebaseApp;
 }
 
 export function getFirebaseAuth() {
-  const app = getFirebaseApp();
-  return getAuth(app);
+  if (!firebaseAuthInstance) {
+    const app = getFirebaseApp();
+    try {
+      // ✅ Use appropriate persistence based on platform
+      const persistence = Platform.OS === 'web' 
+        ? indexedDBLocalPersistence 
+        : inMemoryPersistence;
+        
+      firebaseAuthInstance = initializeAuth(app, { persistence });
+      console.log("✅ Firebase Auth initialized with persistence");
+    } catch (error) {
+      console.log("Auth already initialized");
+      firebaseAuthInstance = getAuth(app);
+    }
+  }
+  return firebaseAuthInstance;
 }

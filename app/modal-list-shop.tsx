@@ -10,12 +10,12 @@ import {
   TextInput,
   Alert,
   Platform,
+  ActivityIndicator,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { shopsStore } from "../lib/../lib/shops-store";
 import * as ImagePicker from "expo-image-picker";
-import * as FileSystem from "expo-file-system";
 import { getFirebaseAuth } from "@/config/firebase-config";
 
 interface FormState {
@@ -91,27 +91,28 @@ export default function ModalListShop() {
     }
 
     const res = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images, // Use the enum
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
       quality: 0.5,
-      allowsEditing: true,
-      aspect: [1, 1],
+      allowsMultipleSelection: true, //  Enable multiple selection
+      base64: true, //  Get base64 directly
+      selectionLimit: 4, // Optional: limit to 4 images
     });
 
     if (!res.canceled && res.assets) {
       try {
         const space = Math.max(0, 4 - form.images.length);
-        const newImages = await Promise.all(
-          res.assets.slice(0, space).map(async (asset) => {
-            const base64 = await FileSystem.readAsStringAsync(asset.uri, {
-              encoding: "base64",
-            });
-            return `data:image/jpeg;base64,${base64}`;
-          })
-        );
+
+        // Use base64 directly from assets
+        const newImages = res.assets.slice(0, space).map((asset) => {
+          if (asset.base64) {
+            return `data:image/jpeg;base64,${asset.base64}`;
+          }
+          return asset.uri; // Fallback to URI
+        });
 
         setForm((p) => ({ ...p, images: [...p.images, ...newImages] }));
       } catch (error) {
-        console.error("Error converting images:", error);
+        console.error("Error processing images:", error);
         Alert.alert("Error", "Failed to process images");
       }
     }
@@ -397,15 +398,20 @@ export default function ModalListShop() {
 
         <View style={styles.footer}>
           <Pressable
+            style={styles.ctaBtn}
             onPress={submit}
             disabled={!isValid || loading}
-            style={[
-              styles.ctaBtn,
-              (!isValid || loading) && styles.ctaBtnDisabled,
-            ]}
-            accessibilityLabel="List My Shop"
+            accessibilityRole="button"
           >
-            <Text style={styles.ctaText}>List My Shop</Text>
+            {loading ? (
+              <ActivityIndicator color="#FFFFFF" />
+            ) : (
+              <Text
+                style={styles.ctaText}
+              >
+                List My Shop
+              </Text>
+            )}
           </Pressable>
           <Text style={styles.footerHelp}>
             Your listing will be visible to potential buyers immediately

@@ -69,7 +69,7 @@ export default function BarbersScreen() {
     return items.filter((b) => region === "All Regions" || b.city === region);
   }, [region, items]);
 
-  const addHref: Href<string> = "/modal-add-barber";
+  const addHref: Href = "/modal-add-barber";
 
   return (
     <SafeAreaView style={styles.safe}>
