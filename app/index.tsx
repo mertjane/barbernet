@@ -29,7 +29,7 @@ import {
   signInWithEmailAndPassword,
 } from "firebase/auth";
 
-import { registerUserInDB } from "../services/auth.api";
+import { registerUserInDB } from "@/services/auth.api";
 import { getUserById } from "@/services/user.api";
 import { handleGoogleSignIn } from "@/services/google-auth.service";
 import LaunchScreen from "./launch-screen";
