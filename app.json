@@ -87,6 +87,14 @@
           }
         }
       ],
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "useFrameworks": "static"
+          }
+        }
+      ],
       "expo-secure-store",
       "expo-font",
       "expo-web-browser"
