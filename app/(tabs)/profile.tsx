@@ -27,7 +27,6 @@ import {
   shopsStore,
   type ShopListing as StoreShop,
 } from "../../lib/shops-store";
-import { getFirebaseAuth } from "@/config/firebase-config";
 import { getUserById, updateUserApi } from "@/services/user.api";
 
 type Mode = "view" | "edit";
@@ -57,7 +56,7 @@ export default function ProfileScreen() {
         const userData = await getUserById(storedUserId);
 
         const u: UserProfile = {
-          id: userData.id,
+          id: storedUserId,
           name: userData.name || "",
           email: userData.email || "",
           phone: userData.phone || "",

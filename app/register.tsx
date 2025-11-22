@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   Image,
@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   TextInput,
   ScrollView,
+  Platform,
 } from "react-native";
 import { AntDesign, FontAwesome } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -24,10 +25,9 @@ import { userStore } from "@/lib/user-store";
 import { getUserById } from "@/services/user.api";
 import { handleGoogleSignIn } from "@/services/google-auth.service";
 
-
 export default function RegisterScreen() {
   const router = useRouter();
-  
+
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -146,13 +146,15 @@ export default function RegisterScreen() {
     } catch (error: any) {
       console.error("Google sign-in error:", error);
       if (error.message !== "Google Sign-In not available in Expo Go") {
-        Alert.alert("Sign In Error", error.message || "Failed to sign in with Google");
+        Alert.alert(
+          "Sign In Error",
+          error.message || "Failed to sign in with Google"
+        );
       }
     } finally {
       setLoading(false);
     }
   };
-
 
   // ============================================
   // HANDLER: Apple Sign-In
@@ -212,7 +214,10 @@ export default function RegisterScreen() {
         return;
       }
       console.error("Apple sign-in error:", error);
-      Alert.alert("Sign In Error", error.message || "Failed to sign in with Apple");
+      Alert.alert(
+        "Sign In Error",
+        error.message || "Failed to sign in with Apple"
+      );
     } finally {
       setLoading(false);
     }
@@ -333,20 +338,24 @@ export default function RegisterScreen() {
               <Text style={[styles.btnText, styles.googleText]}>Google</Text>
             </Pressable>
 
-            {/* Apple Button */}
-            <Pressable
-              onPress={onApple}
-              style={[styles.button, styles.appleBtn]}
-              disabled={loading}
-            >
-              <FontAwesome
-                name="apple"
-                size={18}
-                color="#FFFFFF"
-                style={styles.icon}
-              />
-              <Text style={[styles.btnText, styles.appleText]}>Apple</Text>
-            </Pressable>
+            {/* Apple Button - iOS only */}
+            {Platform.OS === "ios" && (
+              <Pressable
+                onPress={onApple}
+                style={[styles.button, styles.appleBtn]}
+                disabled={loading}
+              >
+                <FontAwesome
+                  name="apple"
+                  size={18}
+                  color="#FFFFFF"
+                  style={styles.icon}
+                />
+                <Text style={[styles.btnText, styles.appleText]}>Apple</Text>
+              </Pressable>
+            )}
+
+            
           </View>
 
           {/* ============================================ */}

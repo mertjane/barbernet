@@ -130,6 +130,12 @@ export const styles = StyleSheet.create({
   appleText: {
     color: "#FFFFFF",
   },
+  facebookBtn: {
+    backgroundColor: '#1877F2',
+  },
+  facebookText: {
+    color: '#FFFFFF',
+  },
   btnText: {
     fontSize: 16,
     fontWeight: Platform.OS === "ios" ? "600" : "700",

@@ -189,7 +189,7 @@ export default function Index() {
       console.log("User store after update:", savedUser); // Debug log
 
       // Mark session
-      await markEntered(userId); 
+      await markEntered(userId);
       router.replace("/(tabs)/home");
     } catch (error: any) {
       console.error("Login error:", error);
@@ -459,19 +459,21 @@ export default function Index() {
               <Text style={[styles.btnText, styles.googleText]}>Google</Text>
             </Pressable>
 
-            <Pressable
-              onPress={onApple}
-              style={[styles.button, styles.appleBtn]}
-              disabled={loading}
-            >
-              <FontAwesome
-                name="apple"
-                size={18}
-                color="#FFFFFF"
-                style={styles.icon}
-              />
-              <Text style={[styles.btnText, styles.appleText]}>Apple</Text>
-            </Pressable>
+            {Platform.OS === "ios" && (
+              <Pressable
+                onPress={onApple}
+                style={[styles.button, styles.appleBtn]}
+                disabled={loading}
+              >
+                <FontAwesome
+                  name="apple"
+                  size={18}
+                  color="#FFFFFF"
+                  style={styles.icon}
+                />
+                <Text style={[styles.btnText, styles.appleText]}>Apple</Text>
+              </Pressable>
+            )}
           </View>
           {/* ============================================ */}
           {/* SECTION: Register Link */}
