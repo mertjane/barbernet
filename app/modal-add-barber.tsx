@@ -10,13 +10,14 @@ import {
   TextInput,
   Alert,
   ActivityIndicator,
+  Keyboard,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
-import * as FileSystem from "expo-file-system";
 import { barbersStore, type City, CITIES } from "../lib/barbers-store";
 import { getFirebaseAuth } from "@/config/firebase-config";
+import { getStoredUserId } from "@/lib/session";
 
 const SKILLS = [
   "Classic Cuts",
@@ -88,6 +89,8 @@ export default function ModalAddBarber() {
   const [customSkill, setCustomSkill] = useState("");
   const [customSpec, setCustomSpec] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [focusField, setFocusField] = useState<string | null>(null);
+  const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -126,6 +129,10 @@ export default function ModalAddBarber() {
 
     if (!form.city) {
       e.city = "City is required";
+    }
+
+    if (!form.bio) {
+      e.bio = "Bio is required";
     }
 
     if (!form.phone_number || !/^\+?\d{7,15}$/.test(form.phone_number)) {
@@ -228,15 +235,20 @@ export default function ModalAddBarber() {
 
   // Submit form
   const submit = async () => {
+    Keyboard.dismiss();
+    setSubmitted(true);
+
     if (!valid) {
-      Alert.alert(
+      console.log(
         "Validation Error",
         "Please fix all errors before submitting"
       );
       return;
     }
 
-    if (!auth.currentUser) {
+    // Check stored user ID instead of Firebase
+    const storedUserId = await getStoredUserId();
+    if (!storedUserId) {
       Alert.alert("Error", "You must be logged in");
       return;
     }
@@ -244,28 +256,44 @@ export default function ModalAddBarber() {
     setIsLoading(true);
 
     try {
+      // Log the payload before sending
+      const payload = {
+        ...form,
+        city: form.city as City,
+        owner_id: storedUserId,
+      };
+
       if (id) {
-        // Update existing barber
-        await barbersStore.update(id, {
-          ...form,
-          city: form.city as City,
-          owner_id: auth.currentUser.uid,
-        });
+        await barbersStore.update(id, payload);
         Alert.alert("Success", "Barber profile updated successfully");
       } else {
-        // Create new barber
-        await barbersStore.add({
-          ...form,
-          city: form.city as City,
-          owner_id: auth.currentUser.uid,
-        });
+        await barbersStore.add(payload);
         Alert.alert("Success", "Barber profile created successfully");
       }
 
       router.back();
     } catch (error: any) {
-      console.error("Error submitting barber:", error);
-      Alert.alert("Error", error.message || "Failed to save barber profile");
+      console.error("❌ Error submitting barber:", error);
+
+      // ✅ Log detailed error info
+      if (error.response) {
+        console.error("📛 Response status:", error.response.status);
+        console.error("📛 Response data:", error.response.data);
+        console.error("📛 Response headers:", error.response.headers);
+
+        Alert.alert(
+          "Error",
+          error.response.data?.message ||
+            error.response.data?.error ||
+            "Failed to save barber profile"
+        );
+      } else if (error.request) {
+        console.error("📛 No response received:", error.request);
+        Alert.alert("Error", "No response from server. Check your connection.");
+      } else {
+        console.error("📛 Error message:", error.message);
+        Alert.alert("Error", error.message || "Failed to save barber profile");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -276,6 +304,8 @@ export default function ModalAddBarber() {
       <ScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        onScrollBeginDrag={Keyboard.dismiss}
       >
         <View style={styles.headerRow}>
           <Pressable
@@ -313,19 +343,43 @@ export default function ModalAddBarber() {
           )}
         </Pressable>
 
+        <Text style={styles.label}>
+          Full Name
+          <Text style={{ color: "#DC2626" }}> *</Text>
+        </Text>
         <TextInput
-          placeholder="Full Name"
+          placeholder="Enter your name"
           placeholderTextColor="#9CA3AF"
           value={form.full_name}
           onChangeText={(v) => setForm((p) => ({ ...p, full_name: v }))}
-          style={[styles.input, !!errors.full_name && styles.inputError]}
+          onFocus={() => setFocusField("full_name")}
+          onBlur={() => setFocusField(null)}
+          style={[
+            styles.input,
+            focusField === "full_name" && styles.inputFocus,
+            submitted && errors.full_name && styles.inputError,
+          ]}
         />
-        {errors.full_name ? (
-          <Text style={styles.err}>{errors.full_name}</Text>
-        ) : null}
-
+        {submitted && errors.full_name && (
+          <View style={styles.errRow}>
+            <Feather
+              name="alert-circle"
+              size={14}
+              color="#DC2626"
+              style={styles.errIcon}
+            />
+            <Text style={styles.err}>{errors.full_name}</Text>
+          </View>
+        )}
+        <Text style={styles.label}>
+          City
+          <Text style={{ color: "#DC2626" }}> *</Text>
+        </Text>
         <Pressable
-          style={[styles.dropdown]}
+          style={[
+            styles.dropdown,
+            submitted && errors.city && styles.inputError,
+          ]}
           onPress={() => setOpenCity((v) => !v)}
         >
           <Text style={styles.dropdownLabel}>{form.city || "Select City"}</Text>
@@ -351,10 +405,23 @@ export default function ModalAddBarber() {
             ))}
           </View>
         )}
-        {errors.city ? <Text style={styles.err}>{errors.city}</Text> : null}
+        {submitted && errors.city && (
+          <View style={styles.errRow}>
+            <Feather
+              name="alert-circle"
+              size={14}
+              color="#DC2626"
+              style={styles.errIcon}
+            />
+            <Text style={styles.err}>{errors.city}</Text>
+          </View>
+        )}
 
         {/* Bio and Contact before experience/skills per request */}
-
+        <Text style={styles.label}>
+          Bio
+          <Text style={{ color: "#DC2626" }}> *</Text>
+        </Text>
         <TextInput
           placeholder="Short bio"
           placeholderTextColor="#9CA3AF"
@@ -362,37 +429,87 @@ export default function ModalAddBarber() {
           numberOfLines={4}
           value={form.bio}
           onChangeText={(v) => setForm((p) => ({ ...p, bio: v }))}
-          style={[styles.textarea, !!errors.bio && styles.inputError]}
+          onFocus={() => setFocusField("bio")}
+          onBlur={() => setFocusField(null)}
+          style={[
+            styles.textarea,
+            focusField === "bio" && styles.inputFocus,
+            submitted && errors.bio && styles.inputError,
+          ]}
         />
-        {errors.bio ? <Text style={styles.err}>{errors.bio}</Text> : null}
-
+        {submitted && errors.bio && (
+          <View style={styles.errRow}>
+            <Feather
+              name="alert-circle"
+              size={14}
+              color="#DC2626"
+              style={styles.errIcon}
+            />
+            <Text style={styles.err}>{errors.bio}</Text>
+          </View>
+        )}
+        <Text style={styles.label}>
+          Phone Number
+          <Text style={{ color: "#DC2626" }}> *</Text>
+        </Text>
         <TextInput
           placeholder="Phone (+44...)"
           placeholderTextColor="#9CA3AF"
           keyboardType="phone-pad"
           value={form.phone_number}
           onChangeText={(v) => setForm((p) => ({ ...p, phone_number: v }))}
-          style={[styles.input, !!errors.phone_number && styles.inputError]}
+          onFocus={() => setFocusField("phone_number")}
+          onBlur={() => setFocusField(null)}
+          style={[
+            styles.input,
+            focusField === "phone_number" && styles.inputFocus,
+            submitted && errors.phone_number && styles.inputError,
+          ]}
         />
-        {errors.phone_number ? (
-          <Text style={styles.err}>{errors.phone_number}</Text>
-        ) : null}
-
+        {submitted && errors.phone_number && (
+          <View style={styles.errRow}>
+            <Feather
+              name="alert-circle"
+              size={14}
+              color="#DC2626" // match icon color to text
+              style={styles.errIcon}
+            />
+            <Text style={styles.err}>{errors.phone_number}</Text>
+          </View>
+        )}
+        <Text style={styles.label}>Email</Text>
         <TextInput
           placeholder="Email (optional)"
           placeholderTextColor="#9CA3AF"
           autoCapitalize="none"
           keyboardType="email-address"
           value={form.email}
+          onFocus={() => setFocusField("email")}
+          onBlur={() => setFocusField(null)}
           onChangeText={(v) => setForm((p) => ({ ...p, email: v }))}
-          style={[styles.input, !!errors.email && styles.inputError]}
+          style={[
+            styles.input,
+            focusField === "email" && styles.inputFocus,
+            submitted && errors.email && styles.inputError,
+          ]}
         />
-        {errors.email ? <Text style={styles.err}>{errors.email}</Text> : null}
+        {submitted && errors.email && (
+          <View style={styles.errRow}>
+            <Feather
+              name="alert-circle"
+              size={14}
+              color="#DC2626" // match icon color to text
+              style={styles.errIcon}
+            />
+            <Text style={styles.err}>{errors.email}</Text>
+          </View>
+        )}
 
         {/* Experience moved below contact and above skills; optional */}
         <View>
+          <Text style={styles.label}>Experiences</Text>
           <Pressable
-            style={[styles.dropdown, !!errors.experience && styles.inputError]}
+            style={styles.dropdown}
             onPress={() => setOpenExperience((v) => !v)}
           >
             <Text style={styles.dropdownLabel}>
@@ -404,6 +521,7 @@ export default function ModalAddBarber() {
               color="#6B7280"
             />
           </Pressable>
+
           {openExperience && (
             <View style={styles.dropdownMenu}>
               {EXPERIENCE_LEVELS.map((l) => (
@@ -456,7 +574,12 @@ export default function ModalAddBarber() {
             placeholderTextColor="#9CA3AF"
             value={customSkill}
             onChangeText={setCustomSkill}
-            style={styles.input}
+            onFocus={() => setFocusField("customSkill")}
+            onBlur={() => setFocusField(null)}
+            style={[
+              styles.input,
+              focusField === "customSkill" && styles.inputFocus,
+            ]}
           />
           <Pressable style={styles.addBtn} onPress={addCustomSkill}>
             <Text style={styles.addBtnText}>Add</Text>
@@ -497,7 +620,12 @@ export default function ModalAddBarber() {
             placeholderTextColor="#9CA3AF"
             value={customSpec}
             onChangeText={setCustomSpec}
-            style={styles.input}
+            onFocus={() => setFocusField("customSpec")}
+            onBlur={() => setFocusField(null)}
+            style={[
+              styles.input,
+              focusField === "customSpec" && styles.inputFocus,
+            ]}
           />
           <Pressable style={styles.addBtn} onPress={addCustomSpec}>
             <Text style={styles.addBtnText}>Add</Text>
@@ -510,7 +638,7 @@ export default function ModalAddBarber() {
         <Pressable
           accessibilityRole="button"
           onPress={submit}
-          disabled={!valid || isLoading}
+          disabled={isLoading}
           style={styles.footerBtn}
         >
           {isLoading ? (
@@ -562,7 +690,12 @@ const styles = StyleSheet.create({
   photoInner: { alignItems: "center" },
   photoText: { marginTop: 4, color: "#6B7280", fontSize: 12 },
   photoImg: { width: 88, height: 88, borderRadius: 44 },
-
+  label: {
+    marginTop: 10,
+    marginBottom: 6,
+    color: "#111827",
+    fontWeight: "600",
+  },
   input: {
     height: 48,
     borderRadius: 12,
@@ -585,7 +718,18 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   inputError: { borderColor: "#FCA5A5" },
-  err: { color: "#B91C1C", fontSize: 12, marginBottom: 6 },
+  inputFocus: { borderColor: "#10B981" },
+  errRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: -4,
+    marginBottom: 12,
+  },
+  errIcon: {
+    marginRight: 6,
+    marginTop: 1,
+  },
+  err: { color: "#cc0000", fontSize: 12 },
 
   dropdown: {
     height: 44,

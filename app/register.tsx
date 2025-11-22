@@ -27,8 +27,7 @@ import { handleGoogleSignIn } from "@/services/google-auth.service";
 
 export default function RegisterScreen() {
   const router = useRouter();
-
-
+  
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

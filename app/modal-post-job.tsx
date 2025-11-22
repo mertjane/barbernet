@@ -3,7 +3,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import {
   View,
   Text,
-  StyleSheet,
   ScrollView,
   Pressable,
   TextInput,
@@ -11,14 +10,15 @@ import {
   Image,
   Platform,
   ActivityIndicator,
+  Keyboard,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { jobsStore, type JobType, type JobListing } from "../lib/jobs-store";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
-import * as FileSystem from "expo-file-system";
 import { userStore } from "../lib/user-store";
 import { styles } from "@/styles/_modal-post-job.styles";
+import { getStoredUserId } from "@/lib/session";
 
 // Map display types to API types
 const JOB_TYPE_DISPLAY: Record<string, JobType> = {
@@ -57,6 +57,7 @@ export default function ModalPostJob() {
   const [openType, setOpenType] = useState(false);
   const [loading, setLoading] = useState(false);
   const [focusField, setFocusField] = useState<string | null>(null);
+  const [submitted, setSubmitted] = useState<boolean>(false);
 
   // Load existing job data if editing
   useEffect(() => {
@@ -136,16 +137,31 @@ export default function ModalPostJob() {
   };
 
   const submit = async () => {
-    if (!isValid || loading) return;
+    Keyboard.dismiss();
+    setSubmitted(true);
 
-    const owner = userStore.get();
+    if (!isValid) {
+      console.log(
+        "Validation Error",
+        "Please fix all errors before submitting"
+      );
+      return;
+    }
+
+    const storedUserId = await getStoredUserId();
+    if (!storedUserId) {
+      Alert.alert("Error", "You must be logged in");
+      return;
+    }
+
+    setLoading(true);
 
     setLoading(true);
 
     try {
       const apiType = form.type ? JOB_TYPE_DISPLAY[form.type] : "Full-time";
 
-      // ✅ Match backend field names exactly
+      // Match backend field names exactly
       const payload: Omit<JobListing, "id" | "created_at" | "updated_at"> = {
         shop_name: form.shopName.trim(),
         phone_number: form.phone.trim(),
@@ -154,13 +170,13 @@ export default function ModalPostJob() {
         salary_text: form.salaryText.trim(),
         description: form.description.trim(),
         images: form.images,
-        owner_id: owner.id,
+        owner_id: storedUserId,
       };
 
       console.log("Sending payload:", payload);
 
       if (id) {
-        await jobsStore.update(String(id), owner.id, payload);
+        await jobsStore.update(String(id), storedUserId, payload);
         Alert.alert("Success", "Job updated successfully!");
       } else {
         await jobsStore.add(payload);
@@ -187,6 +203,8 @@ export default function ModalPostJob() {
         <ScrollView
           contentContainerStyle={styles.scroll}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          onScrollBeginDrag={Keyboard.dismiss}
         >
           <View style={styles.headerRow}>
             <Pressable
@@ -213,7 +231,7 @@ export default function ModalPostJob() {
             style={[
               styles.inputRow,
               focusField === "shopName" && styles.inputFocus,
-              !!errors.shopName && styles.inputError,
+              submitted && errors.shopName && styles.inputError,
             ]}
           >
             <Feather name="briefcase" size={16} color="#6B7280" />
@@ -228,9 +246,17 @@ export default function ModalPostJob() {
               onChangeText={(v) => setForm((p) => ({ ...p, shopName: v }))}
             />
           </View>
-          {errors.shopName ? (
-            <Text style={styles.err}>{errors.shopName}</Text>
-          ) : null}
+          {submitted && errors.shopName && (
+            <View style={styles.errRow}>
+              <Feather
+                name="alert-circle"
+                size={14}
+                color="#DC2626"
+                style={styles.errIcon}
+              />
+              <Text style={styles.err}>{errors.shopName}</Text>
+            </View>
+          )}
 
           {/* Phone */}
           <Text style={styles.label}>
@@ -240,7 +266,7 @@ export default function ModalPostJob() {
             style={[
               styles.inputRow,
               focusField === "phone" && styles.inputFocus,
-              !!errors.phone && styles.inputError,
+              submitted && errors.phone && styles.inputError,
             ]}
           >
             <Feather name="phone" size={16} color="#6B7280" />
@@ -255,14 +281,28 @@ export default function ModalPostJob() {
                   default: "phone-pad",
                 }) as any
               }
-              style={styles.input}
+              style={[
+                styles.input,
+                submitted && focusField === "phone" && styles.inputFocus,
+                submitted && errors.phone && styles.inputError,
+              ]}
               value={form.phone}
               onFocus={() => setFocusField("phone")}
               onBlur={() => setFocusField(null)}
               onChangeText={(v) => setForm((p) => ({ ...p, phone: v }))}
             />
           </View>
-          {errors.phone ? <Text style={styles.err}>{errors.phone}</Text> : null}
+          {submitted && errors.phone && (
+            <View style={styles.errRow}>
+              <Feather
+                name="alert-circle"
+                size={14}
+                color="#DC2626"
+                style={styles.errIcon}
+              />
+              <Text style={styles.err}>{errors.phone}</Text>
+            </View>
+          )}
 
           {/* Location */}
           <Text style={styles.label}>
@@ -272,7 +312,7 @@ export default function ModalPostJob() {
             style={[
               styles.inputRow,
               focusField === "location" && styles.inputFocus,
-              !!errors.location && styles.inputError,
+              submitted && errors.location && styles.inputError,
             ]}
           >
             <Ionicons name="location-outline" size={16} color="#6B7280" />
@@ -287,9 +327,17 @@ export default function ModalPostJob() {
               onChangeText={(v) => setForm((p) => ({ ...p, location: v }))}
             />
           </View>
-          {errors.location ? (
-            <Text style={styles.err}>{errors.location}</Text>
-          ) : null}
+          {submitted && errors.location && (
+            <View style={styles.errRow}>
+              <Feather
+                name="alert-circle"
+                size={14}
+                color="#DC2626"
+                style={styles.errIcon}
+              />
+              <Text style={styles.err}>{errors.location}</Text>
+            </View>
+          )}
 
           {/* Job Type */}
           <Text style={styles.label}>
@@ -299,7 +347,10 @@ export default function ModalPostJob() {
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Select job type"
-              style={[styles.select, !!errors.type && styles.inputError]}
+              style={[
+                styles.select,
+                submitted && errors.type && submitted && styles.inputError,
+              ]}
               onPress={() => setOpenType((v) => !v)}
             >
               <Text style={styles.selectLabel}>
@@ -328,7 +379,17 @@ export default function ModalPostJob() {
               </View>
             )}
           </View>
-          {errors.type ? <Text style={styles.err}>{errors.type}</Text> : null}
+          {submitted && errors.type && (
+            <View style={styles.errRow}>
+              <Feather
+                name="alert-circle"
+                size={14}
+                color="#DC2626"
+                style={styles.errIcon}
+              />
+              <Text style={styles.err}>{errors.type}</Text>
+            </View>
+          )}
 
           {/* Salary */}
           <Text style={styles.label}>
@@ -338,7 +399,7 @@ export default function ModalPostJob() {
             style={[
               styles.inputRow,
               focusField === "salary" && styles.inputFocus,
-              !!errors.salaryText && styles.inputError,
+              submitted && errors.salaryText && styles.inputError,
             ]}
           >
             <Text style={{ color: "#6B7280", fontWeight: "700" }}>£</Text>
@@ -353,9 +414,17 @@ export default function ModalPostJob() {
               onChangeText={(v) => setForm((p) => ({ ...p, salaryText: v }))}
             />
           </View>
-          {errors.salaryText ? (
-            <Text style={styles.err}>{errors.salaryText}</Text>
-          ) : null}
+          {submitted && errors.salaryText && (
+            <View style={styles.errRow}>
+              <Feather
+                name="alert-circle"
+                size={14}
+                color="#DC2626"
+                style={styles.errIcon}
+              />
+              <Text style={styles.err}>{errors.salaryText}</Text>
+            </View>
+          )}
 
           {/* Description */}
           <Text style={styles.label}>
@@ -369,19 +438,27 @@ export default function ModalPostJob() {
             numberOfLines={5}
             style={[
               styles.textarea,
-              focusField === "desc" && styles.inputFocus,
-              !!errors.description && styles.inputError,
+              focusField === "description" && styles.inputFocus,
+              submitted && errors.description && styles.inputError,
             ]}
             value={form.description}
-            onFocus={() => setFocusField("desc")}
+            onFocus={() => setFocusField("description")}
             onBlur={() => setFocusField(null)}
             onChangeText={(v) =>
               setForm((p) => ({ ...p, description: v.slice(0, 800) }))
             }
           />
-          {errors.description ? (
-            <Text style={styles.err}>{errors.description}</Text>
-          ) : null}
+          {submitted && errors.description && (
+            <View style={styles.errRow}>
+              <Feather
+                name="alert-circle"
+                size={14}
+                color="#DC2626"
+                style={styles.errIcon}
+              />
+              <Text style={styles.err}>{errors.description}</Text>
+            </View>
+          )}
 
           {/* Images */}
           <Text style={styles.label}>Shop Images (Optional)</Text>
@@ -427,11 +504,8 @@ export default function ModalPostJob() {
             accessibilityRole="button"
             accessibilityLabel="Post Job"
             onPress={submit}
-            disabled={!isValid || loading}
-            style={[
-              styles.postBtn,
-              (!isValid || loading) && styles.postBtnDisabled,
-            ]}
+            disabled={loading}
+            style={[styles.postBtn, loading && styles.postBtnDisabled]}
           >
             {loading ? (
               <ActivityIndicator color="#FFFFFF" />

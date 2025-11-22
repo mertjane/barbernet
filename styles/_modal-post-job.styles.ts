@@ -50,7 +50,17 @@ export const styles = StyleSheet.create({
   },
   inputError: { borderColor: "#FCA5A5" },
   inputFocus: { borderColor: "#10B981" },
-  err: { color: "#B91C1C", fontSize: 12, marginTop: 4 },
+  errRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 8,
+    marginBottom: 8,
+  },
+  errIcon: {
+    marginRight: 6,
+    marginTop: 1,
+  },
+  err: { color: "#cc0000", fontSize: 12},
   helper: { color: "#6B7280", fontSize: 12, marginBottom: 6 },
 
   select: {

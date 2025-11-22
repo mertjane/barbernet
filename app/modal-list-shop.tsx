@@ -11,12 +11,15 @@ import {
   Alert,
   Platform,
   ActivityIndicator,
+  Keyboard,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { shopsStore } from "../lib/../lib/shops-store";
 import * as ImagePicker from "expo-image-picker";
 import { getFirebaseAuth } from "@/config/firebase-config";
+import formatPriceInput from "@/lib/utils/formatPrice";
+import { getStoredUserId } from "@/lib/session";
 
 interface FormState {
   shop_name: string;
@@ -25,12 +28,6 @@ interface FormState {
   info: string;
   phone_number: string;
   images: string[];
-}
-
-function formatPriceInput(v: string) {
-  const digits = v.replace(/[^\d]/g, "");
-  if (!digits) return "";
-  return `£${Number(digits).toLocaleString("en-GB")}`;
 }
 
 export default function ModalListShop() {
@@ -48,6 +45,7 @@ export default function ModalListShop() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [focusField, setFocusField] = useState<string | null>(null);
+  const [submitted, setSubmitted] = useState<boolean>(false);
 
   // Load existing shop if editing
   useEffect(() => {
@@ -123,9 +121,20 @@ export default function ModalListShop() {
   };
 
   const submit = async () => {
-    if (!isValid || loading) return;
+    Keyboard.dismiss();
+    setSubmitted(true);
 
-    if (!auth.currentUser) {
+    if (!isValid) {
+      console.log(
+        "Validation Error",
+        "Please fix all errors before submitting"
+      );
+      return;
+    }
+
+    // Check stored user ID instead of Firebase
+    const storedUserId = await getStoredUserId();
+    if (!storedUserId) {
       Alert.alert("Error", "You must be logged in");
       return;
     }
@@ -141,7 +150,7 @@ export default function ModalListShop() {
           info: form.info.trim(),
           phone_number: form.phone_number.trim(),
           images: form.images,
-          owner_id: auth.currentUser.uid,
+          owner_id: storedUserId,
         });
         Alert.alert("Shop Updated", `${form.shop_name} has been updated`);
       } else {
@@ -153,7 +162,7 @@ export default function ModalListShop() {
           info: form.info.trim(),
           phone_number: form.phone_number.trim(),
           images: form.images,
-          owner_id: auth.currentUser.uid,
+          owner_id: storedUserId,
         });
         Alert.alert(
           "Shop Listed",
@@ -175,6 +184,8 @@ export default function ModalListShop() {
         <ScrollView
           contentContainerStyle={styles.scroll}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          onScrollBeginDrag={Keyboard.dismiss}
         >
           <View style={styles.headerRow}>
             <Pressable
@@ -208,10 +219,20 @@ export default function ModalListShop() {
             style={[
               styles.input,
               focusField === "name" && styles.inputFocus,
-              !!errors.name && styles.inputError,
+              submitted && errors.shop_name && styles.inputError,
             ]}
           />
-          {errors.name ? <Text style={styles.err}>{errors.name}</Text> : null}
+          {submitted && errors.shop_name && (
+            <View style={styles.errRow}>
+              <Feather
+                name="alert-circle"
+                size={14}
+                color="#DC2626"
+                style={styles.errIcon}
+              />
+              <Text style={styles.err}>{errors.shop_name}</Text>
+            </View>
+          )}
 
           {/* Contact Phone */}
           <Text style={styles.label}>
@@ -221,7 +242,7 @@ export default function ModalListShop() {
             style={[
               styles.inputRow,
               focusField === "phone" && styles.inputFocus,
-              !!errors.phone && styles.inputError,
+              submitted && errors.phone_number && styles.inputError,
             ]}
           >
             <Feather name="phone" size={16} color="#6B7280" />
@@ -242,7 +263,17 @@ export default function ModalListShop() {
               onBlur={() => setFocusField(null)}
             />
           </View>
-          {errors.phone ? <Text style={styles.err}>{errors.phone}</Text> : null}
+          {submitted && errors.phone_number && (
+            <View style={styles.errRow}>
+              <Feather
+                name="alert-circle"
+                size={14}
+                color="#DC2626"
+                style={styles.errIcon}
+              />
+              <Text style={styles.err}>{errors.phone_number}</Text>
+            </View>
+          )}
 
           {/* Price */}
           <Text style={styles.label}>
@@ -252,7 +283,7 @@ export default function ModalListShop() {
             style={[
               styles.inputRow,
               focusField === "price" && styles.inputFocus,
-              !!errors.price && styles.inputError,
+              submitted && errors.sale_price && styles.inputError,
             ]}
           >
             <Text style={{ color: "#6B7280", fontWeight: "700" }}>£</Text>
@@ -275,7 +306,17 @@ export default function ModalListShop() {
               onBlur={() => setFocusField(null)}
             />
           </View>
-          {errors.price ? <Text style={styles.err}>{errors.price}</Text> : null}
+          {submitted && errors.sale_price && (
+            <View style={styles.errRow}>
+              <Feather
+                name="alert-circle"
+                size={14}
+                color="#DC2626"
+                style={styles.errIcon}
+              />
+              <Text style={styles.err}>{errors.sale_price}</Text>
+            </View>
+          )}
 
           {/* Location */}
           <Text style={styles.label}>
@@ -285,7 +326,7 @@ export default function ModalListShop() {
             style={[
               styles.inputRow,
               focusField === "location" && styles.inputFocus,
-              !!errors.location && styles.inputError,
+              submitted && errors.location && styles.inputError, // only show error after submit
             ]}
           >
             <Ionicons name="location-outline" size={16} color="#6B7280" />
@@ -299,9 +340,17 @@ export default function ModalListShop() {
               onBlur={() => setFocusField(null)}
             />
           </View>
-          {errors.location ? (
-            <Text style={styles.err}>{errors.location}</Text>
-          ) : null}
+          {submitted && errors.location && (
+            <View style={styles.errRow}>
+              <Feather
+                name="alert-circle"
+                size={14}
+                color="#DC2626"
+                style={styles.errIcon}
+              />
+              <Text style={styles.err}>{errors.location}</Text>
+            </View>
+          )}
 
           {/* Description */}
           <Text style={styles.label}>
@@ -320,12 +369,20 @@ export default function ModalListShop() {
             style={[
               styles.textarea,
               focusField === "description" && styles.inputFocus,
-              !!errors.description && styles.inputError,
+              submitted && errors.info && styles.inputError,
             ]}
           />
-          {errors.description ? (
-            <Text style={styles.err}>{errors.description}</Text>
-          ) : null}
+          {submitted && errors.info && (
+            <View style={styles.errRow}>
+              <Feather
+                name="alert-circle"
+                size={14}
+                color="#DC2626"
+                style={styles.errIcon}
+              />
+              <Text style={styles.err}>{errors.info}</Text>
+            </View>
+          )}
 
           {/* Images */}
           <Text style={styles.label}>Shop Images</Text>
@@ -400,17 +457,13 @@ export default function ModalListShop() {
           <Pressable
             style={styles.ctaBtn}
             onPress={submit}
-            disabled={!isValid || loading}
+            disabled={loading}
             accessibilityRole="button"
           >
             {loading ? (
               <ActivityIndicator color="#FFFFFF" />
             ) : (
-              <Text
-                style={styles.ctaText}
-              >
-                List My Shop
-              </Text>
+              <Text style={styles.ctaText}>List My Shop</Text>
             )}
           </Pressable>
           <Text style={styles.footerHelp}>
@@ -488,7 +541,17 @@ const styles = StyleSheet.create({
   },
   inputError: { borderColor: "#FCA5A5" },
   inputFocus: { borderColor: "#10B981" },
-  err: { color: "#B91C1C", fontSize: 12, marginBottom: 6 },
+  errRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: -4,
+    marginBottom: 12,
+  },
+  errIcon: {
+    marginRight: 6,
+    marginTop: 1,
+  },
+  err: { color: "#cc0000", fontSize: 12 },
   helper: { color: "#6B7280", fontSize: 12, marginBottom: 6 },
 
   uploadBox: {

@@ -11,11 +11,11 @@ import {
   ScrollView,
   Platform,
   ActivityIndicator,
+  Keyboard,
 } from "react-native";
-import * as FileSystem from "expo-file-system";
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { clearEntered } from "../../lib/session";
+import { clearEntered, getStoredUserId } from "../../lib/session";
 import * as ImagePicker from "expo-image-picker";
 import { userStore, type UserProfile } from "../../lib/user-store";
 import { jobsStore, type JobListing as StoreJob } from "../../lib/jobs-store";
@@ -42,41 +42,33 @@ export default function ProfileScreen() {
   const [shops, setShops] = useState<StoreShop[]>(shopsStore.get());
   const isView = mode === "view";
 
-  const auth = getFirebaseAuth();
-
   // ✅ Fetch user data from backend DB instead of Firebase Auth
   useEffect(() => {
     const loadUserData = async () => {
-      if (auth.currentUser) {
-        try {
-          // Fetch from backend DB
-          const userData = await getUserById(auth.currentUser.uid);
-
-          const u: UserProfile = {
-            id: userData.id,
-            name: userData.name || "",
-            email: userData.email || "",
-            phone: userData.phone || "",
-            photo: userData.photo ? { uri: userData.photo } : null,
-          };
-
-          userStore.update(u);
-          setUser(u);
-        } catch (error) {
-          console.error("Error loading user data:", error);
-          // Fallback to Firebase data if DB fetch fails
-          const u: UserProfile = {
-            id: auth.currentUser.uid,
-            name: auth.currentUser.displayName || "",
-            email: auth.currentUser.email || "",
-            phone: auth.currentUser.phoneNumber || "",
-            photo: auth.currentUser.photoURL
-              ? { uri: auth.currentUser.photoURL }
-              : null,
-          };
-          userStore.update(u);
-          setUser(u);
+      try {
+        const storedUserId = await getStoredUserId();
+        if (!storedUserId) {
+          console.log("No stored user ID, redirecting to login");
+          router.replace("/");
+          return;
         }
+
+        // Fetch from backend DB
+        const userData = await getUserById(storedUserId);
+
+        const u: UserProfile = {
+          id: userData.id,
+          name: userData.name || "",
+          email: userData.email || "",
+          phone: userData.phone || "",
+          photo: userData.photo ? { uri: userData.photo } : null,
+        };
+
+        userStore.update(u);
+        setUser(u);
+      } catch (error) {
+        console.error("Error loading user data:", error);
+        Alert.alert("Error", "Failed to load profile data");
       }
     };
 
@@ -103,9 +95,15 @@ export default function ProfileScreen() {
 
     setLoading(true);
     try {
+      const storedUserId = await getStoredUserId();
+      if (!storedUserId) {
+        Alert.alert("Error", "You must be logged in");
+        return;
+      }
+
       // Call backend API
       const updatedUser = await updateUserApi({
-        id: auth.currentUser?.uid || "", // use Firebase UID
+        id: storedUserId,  // use Firebase UID
         name: user.name,
         email: user.email,
         phone: user.phone,
@@ -267,6 +265,8 @@ export default function ProfileScreen() {
       <ScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        onScrollBeginDrag={Keyboard.dismiss}
       >
         <Text style={styles.header}>Profile</Text>
 
