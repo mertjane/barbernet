@@ -3,11 +3,7 @@
     "name": "barbernet",
     "slug": "barbernet",
     "version": "1.0.0",
-    "platforms": [
-      "ios",
-      "android",
-      "web"
-    ],
+    "platforms": ["ios", "android", "web"],
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "barbernet",
@@ -52,10 +48,7 @@
               "host": "oauth2redirect"
             }
           ],
-          "category": [
-            "BROWSABLE",
-            "DEFAULT"
-          ]
+          "category": ["BROWSABLE", "DEFAULT"]
         }
       ],
       "adaptiveIcon": {
@@ -95,7 +88,12 @@
           }
         }
       ],
-      "@react-native-google-signin/google-signin",
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.475618421121-qjh88jphig737glm6t4f955qfdrs00hm"
+        }
+      ],
       "expo-secure-store",
       "expo-font",
       "expo-web-browser"

@@ -1,5 +1,4 @@
 import { Alert, Platform } from 'react-native';
-import Constants from 'expo-constants';
 import { User, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { getFirebaseAuth } from '../config/firebase-config';
 
