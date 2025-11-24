@@ -156,8 +156,6 @@ export default function ModalPostJob() {
 
     setLoading(true);
 
-    setLoading(true);
-
     try {
       const apiType = form.type ? JOB_TYPE_DISPLAY[form.type] : "Full-time";
 

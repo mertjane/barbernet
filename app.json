@@ -37,6 +37,7 @@
     },
     "android": {
       "package": "com.dev.barbernet",
+      "versionCode": 1,
       "googleServicesFile": "./google-services.json",
       "intentFilters": [
         {
@@ -54,7 +55,13 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#0D9488"
-      }
+      },
+      "permissions": [
+        "CAMERA",
+        "READ_MEDIA_IMAGES",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ]
     },
     "web": {
       "bundler": "metro",

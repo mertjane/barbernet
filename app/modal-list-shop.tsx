@@ -17,7 +17,6 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { shopsStore } from "../lib/../lib/shops-store";
 import * as ImagePicker from "expo-image-picker";
-import { getFirebaseAuth } from "@/config/firebase-config";
 import formatPriceInput from "@/lib/utils/formatPrice";
 import { getStoredUserId } from "@/lib/session";
 
@@ -33,7 +32,6 @@ interface FormState {
 export default function ModalListShop() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id?: string }>();
-  const auth = getFirebaseAuth();
   const [form, setForm] = useState<FormState>({
     shop_name: "",
     sale_price: "",
