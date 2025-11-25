@@ -2,10 +2,21 @@ import { Alert, Platform } from 'react-native';
 import { User, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { getFirebaseAuth } from '../config/firebase-config';
 
-// Import native sign-in directly (not conditionally)
-import { signInWithGoogleNative } from '@/services/auth-native.service';
+// Default: no native method available
+let nativeGoogleSignIn: null | (() => Promise<any>) = null;
 
 const isWeb = Platform.OS === 'web';
+
+// Load native module only when not running on web
+if (!isWeb) {
+  try {
+    const nativeModule = require('@/services/auth-native.service');
+    nativeGoogleSignIn = nativeModule.signInWithGoogleNative;
+    console.log('Native Google Sign-In module loaded');
+  } catch (error) {
+    console.log('Native Google Sign-In not available');
+  }
+}
 
 export type AuthState = {
   user: User | null;
@@ -18,8 +29,8 @@ export function onAuth(callback: (user: User | null) => void) {
 }
 
 export async function handleGoogleSignIn() {
-  console.log('Google Sign-In attempt - Platform:', Platform.OS);
-  
+  console.log('Google Sign-In attempt - isWeb:', isWeb, 'hasNative:', !!nativeGoogleSignIn);
+
   /** ---- WEB (Firebase popup) ---- **/
   if (isWeb) {
     try {
@@ -27,6 +38,7 @@ export async function handleGoogleSignIn() {
       const provider = new GoogleAuthProvider();
       provider.addScope('profile');
       provider.addScope('email');
+
       const result = await signInWithPopup(auth, provider);
       return result;
     } catch (error: any) {
@@ -34,29 +46,21 @@ export async function handleGoogleSignIn() {
       throw error;
     }
   }
-  
-  /** ---- NATIVE (iOS/Android) ---- **/
-  try {
+
+  /** ---- NATIVE DEV BUILD (Native Google Auth) ---- **/
+  if (nativeGoogleSignIn) {
     console.log('Using native Google Sign-In');
-    return await signInWithGoogleNative();
-  } catch (error: any) {
-    console.error('Native Google Sign-In error:', error);
-    
-    // Only show Expo Go message if it's actually an Expo Go issue
-    if (error.message?.includes('Expo Go')) {
-      Alert.alert(
-        "Not Available in Expo Go",
-        "Google Sign-In requires a development build. Please use email/password login."
-      );
-    } else {
-      // Show actual error for production builds
-      Alert.alert(
-        "Sign In Error",
-        error.message || "Failed to sign in with Google. Please try again."
-      );
-    }
-    throw error;
+    return await nativeGoogleSignIn();
   }
+
+  /** ---- EXPO GO FALLBACK ---- **/
+  console.log('Google Sign-In not available');
+  Alert.alert(
+    "Not Available in Expo Go",
+    "Google Sign-In requires a development build. Please use email/password login or build the app with 'npx expo run:android'."
+  );
+
+  throw new Error("Google Sign-In not available in Expo Go");
 }
 
-export const isGoogleSignInAvailable = true; // Always available in production builds
+export const isGoogleSignInAvailable = isWeb || nativeGoogleSignIn !== null;
