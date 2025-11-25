@@ -83,7 +83,7 @@ export default function RegisterScreen() {
       });
 
       // Continue app flow
-      await markEntered();
+      await markEntered(user.uid);
       Alert.alert("Success", "Account created successfully!");
       router.replace("/(tabs)/home");
     } catch (error: any) {
@@ -141,7 +141,7 @@ export default function RegisterScreen() {
       };
 
       userStore.update(userForStore);
-      await markEntered();
+      await markEntered(userId);
       router.replace("/(tabs)/home");
     } catch (error: any) {
       console.error("Google sign-in error:", error);
@@ -206,7 +206,7 @@ export default function RegisterScreen() {
       };
 
       userStore.update(userForStore);
-      await markEntered();
+      await markEntered(userId);
       router.replace("/(tabs)/home");
     } catch (error: any) {
       if (error.code === "ERR_REQUEST_CANCELED") {

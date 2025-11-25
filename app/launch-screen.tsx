@@ -9,7 +9,7 @@ import {
 } from "react-native";
 
 export default function LaunchScreen() {
-  const [animComplete, setAnimComplete] = useState(false);
+  const [_animComplete, setAnimComplete] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
 
