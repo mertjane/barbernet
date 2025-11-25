@@ -10,7 +10,7 @@ const isWeb = Platform.OS === 'web';
 // Load native module only when not running on web
 if (!isWeb) {
   try {
-    const nativeModule = require('@/services/auth-native.service');
+    const nativeModule = require('./auth-native.service');
     nativeGoogleSignIn = nativeModule.signInWithGoogleNative;
     console.log('Native Google Sign-In module loaded');
   } catch (error) {
