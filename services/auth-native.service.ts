@@ -8,15 +8,26 @@ let isConfigured = false;
 function ensureConfigured() {
   if (isConfigured) return;
   
+  const webClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
+  const iosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
+  
+  console.log('🔧 Configuring Google Sign-In with:');
+  console.log('  webClientId:', webClientId ? '✅ Set' : '❌ Missing');
+  console.log('  iosClientId:', iosClientId ? '✅ Set' : '❌ Missing');
+  
+  if (!webClientId) {
+    throw new Error('EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID is not set');
+  }
+  
   try {
     GoogleSignin.configure({
-      webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-      iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+      webClientId: webClientId,
+      iosClientId: iosClientId,
       offlineAccess: true,
       scopes: ['profile', 'email'],
     });
     isConfigured = true;
-    console.log('✅ GoogleSignin configured');
+    console.log('✅ GoogleSignin configured successfully');
   } catch (error) {
     console.error('❌ GoogleSignin.configure failed:', error);
     throw error;
@@ -35,7 +46,7 @@ export async function signInWithGoogleNative() {
     
     // Sign in
     const response = await GoogleSignin.signIn();
-    console.log('Google Sign-In response received:', response);
+    console.log('Google Sign-In response received');
     
     // Get idToken from the response
     const idToken = response.data?.idToken;

@@ -29,7 +29,8 @@
         "buildType": "app-bundle"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL_PRODUCTION": "https://barbernet-backend-q8id.onrender.com/api"
+        "EXPO_PUBLIC_API_URL_PRODUCTION": "https://barbernet-backend-q8id.onrender.com/api",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "475618421121-offl3avdnlbc3hgsvl9l6t80adlgbq0g.apps.googleusercontent.com"
       }
     }
   },
