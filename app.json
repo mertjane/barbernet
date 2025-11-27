@@ -2,7 +2,7 @@
   "expo": {
     "name": "barbernet",
     "slug": "barbernet",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "platforms": ["ios", "android", "web"],
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -16,10 +16,13 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.dev.barbernet",
+      "buildNumber": "2",
       "googleServicesFile": "./GoogleService-Info.plist",
       "icon": "./assets/images/icon.png",
       "usesAppleSignIn": true,
       "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "BarberNet needs access to your photo library to allow you to select and upload images of your barber work, shop environment, or equipment when creating a market post or job listing.",
+        "NSCameraUsageDescription": "BarberNet needs access to your camera to allow you to take and upload new photos of your work or shop environment directly to your profile or posts.",
         "CFBundleURLTypes": [
           {
             "CFBundleURLSchemes": [

@@ -27,7 +27,9 @@ import {
   shopsStore,
   type ShopListing as StoreShop,
 } from "../../lib/shops-store";
-import { getUserById, updateUserApi } from "@/services/user.api";
+import { deleteUserApi, getUserById, updateUserApi } from "@/services/user.api";
+import { getFirebaseAuth } from "@/config/firebase-config";
+import { deleteUser } from "firebase/auth";
 
 type Mode = "view" | "edit";
 
@@ -102,7 +104,7 @@ export default function ProfileScreen() {
 
       // Call backend API
       const updatedUser = await updateUserApi({
-        id: storedUserId,  // use Firebase UID
+        id: storedUserId, // use Firebase UID
         name: user.name,
         email: user.email,
         phone: user.phone,
@@ -186,6 +188,56 @@ export default function ProfileScreen() {
         },
       },
     ]);
+  };
+
+  // Delete account
+  const onDeleteAccount = () => {
+    Alert.alert(
+      "Delete Account",
+      "You are about the delete your account. This action is permanent and cannot be undone. All your data will be lost.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete Forever",
+          style: "destructive", // Shows red in iOS
+          onPress: async () => {
+            try {
+              setLoading(true);
+
+              const storedUserId = await getStoredUserId();
+
+              if (storedUserId) {
+                // 1. Delete from PostgreSQL (Backend)
+                console.log("Deleting from Backend DB...");
+                await deleteUserApi(storedUserId);
+
+                // 2. Delete from Firebase Auth
+                const auth = getFirebaseAuth();
+                const currentUser = auth.currentUser;
+
+                if (currentUser) {
+                  console.log("Deleting from Firebase Auth...");
+                  await deleteUser(currentUser);
+                }
+              }
+
+              // Clear session and navigate out
+              await clearEntered();
+              
+              Alert.alert("Account Deleted", "Your account has been successfully deleted.");
+              router.replace("/");
+            } catch (error) {
+              Alert.alert(
+                "Error: ",
+                "Failed to delete account. Please try again."
+              );
+            } finally {
+              setLoading(false);
+            }
+          },
+        },
+      ]
+    );
   };
 
   useEffect(() => {
@@ -511,6 +563,12 @@ export default function ProfileScreen() {
           <Text style={styles.signOutText}>Sign Out</Text>
         </Pressable>
 
+        {/* Delete Account Button */}
+        <Pressable style={styles.deleteBtn} onPress={onDeleteAccount}>
+          <Feather name="trash-2" size={16} color="#FFFFFF" />
+          <Text style={styles.deleteBtnText}>Delete Account</Text>
+        </Pressable>
+
         {/* Footer Section */}
         <View style={styles.footer}>
           <View style={styles.footerDivider} />
@@ -630,6 +688,20 @@ const styles = StyleSheet.create({
     flexDirection: "row",
   },
   signOutText: { color: "#DC2626", fontWeight: "700", marginLeft: 8 },
+  deleteBtn: {
+    marginTop: 12,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: "#EF4444", // Solid Red to indicate danger/irreversible
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+  },
+  deleteBtnText: {
+    color: "#FFFFFF",
+    fontWeight: "700",
+    marginLeft: 8,
+  },
   sectionHdr: {
     marginTop: 6,
     marginBottom: 6,
