@@ -14,7 +14,7 @@
       "backgroundColor": "#0D9488"
     },
     "ios": {
-      "supportsTablet": true,
+      "supportsTablet": false,
       "bundleIdentifier": "com.dev.barbernet",
       "buildNumber": "2",
       "googleServicesFile": "./GoogleService-Info.plist",
