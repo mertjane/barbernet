@@ -3,7 +3,11 @@
     "name": "barbernet",
     "slug": "barbernet",
     "version": "1.0.2",
-    "platforms": ["ios", "android", "web"],
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "barbernet",
@@ -33,6 +37,16 @@
             "CFBundleURLSchemes": [
               "com.googleusercontent.apps.475618421121-qjh88jphig737glm6t4f955qfdrs00hm"
             ]
+          },
+          {
+            "CFBundleURLSchemes": [
+              "com.googleusercontent.apps.475618421121-qjh88jphig737glm6t4f955qfdrs00hm"
+            ]
+          },
+          {
+            "CFBundleURLSchemes": [
+              "com.googleusercontent.apps.475618421121-qjh88jphig737glm6t4f955qfdrs00hm"
+            ]
           }
         ],
         "ITSAppUsesNonExemptEncryption": false
@@ -52,7 +66,10 @@
               "host": "oauth2redirect"
             }
           ],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ],
       "adaptiveIcon": {
@@ -60,6 +77,10 @@
         "backgroundColor": "#0D9488"
       },
       "permissions": [
+        "CAMERA",
+        "READ_MEDIA_IMAGES",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
         "CAMERA",
         "READ_MEDIA_IMAGES",
         "ACCESS_FINE_LOCATION",
@@ -125,6 +146,12 @@
         "projectId": "eb46af1a-e161-4d56-ad4d-23a6b7dd7025"
       }
     },
-    "owner": "diplodev"
+    "owner": "diplodev",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/eb46af1a-e161-4d56-ad4d-23a6b7dd7025"
+    }
   }
 }
