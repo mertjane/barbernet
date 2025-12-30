@@ -90,8 +90,8 @@ export default function HomeScreen() {
         {/* Feature Cards Grid */}
         <View style={styles.grid}>
           <FeatureCard
-            title="Find a Job"
-            subtitle="Browse job listings for barbers"
+            title="Jobs"
+            subtitle="Hire a Barber or Find a Job"
             colors={["#2563EB", "#3B82F6"] as const}
             icon={
               <Ionicons name="briefcase-outline" size={20} color="#2563EB" />
@@ -100,14 +100,14 @@ export default function HomeScreen() {
           />
           <FeatureCard
             title="Barbers"
-            subtitle="Profiles of barbers looking for work"
+            subtitle="Create a Barber Profile"
             colors={["#059669", "#10B981"] as const}
             icon={<Ionicons name="people-outline" size={20} color="#059669" />}
             onPress={() => router.push("/(tabs)/barbers")}
           />
           <FeatureCard
-            title="Shops for Sale"
-            subtitle="Barber shop listings"
+            title="Shops"
+            subtitle="Shop for sale or Listing"
             colors={["#7C3AED", "#8B5CF6"] as const}
             icon={<Feather name="shopping-bag" size={20} color="#7C3AED" />}
             onPress={() => router.push("/(tabs)/shops")}
@@ -432,8 +432,8 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#111827",
   },
-  cardSubtitle: { marginTop: 6, fontSize: 12, color: "#6B7280" },
-  cardArrow: { position: "absolute", right: 12, bottom: 12 },
+  cardSubtitle: { marginTop: 6, fontSize: 12, color: "#6B7280", maxWidth: 100, fontWeight: 600},
+  cardArrow: { position: "absolute", right: 12, top: 12 },
   badgeSoon: {
     alignSelf: "flex-start",
     marginTop: 8,
